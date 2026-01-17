@@ -6,6 +6,8 @@ public class GerenciadorDespesas {
 	static String[] categorias = {"Alimentacao", "Transporte", "Lazer", "Outros"};
 	static double[] gastosSemana = new double[7]; //7 dias da semana
 	double orcamentoMensal = 2000.0;
+	static int dSemana = 0;
+	static int categoria = 0;
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -59,7 +61,33 @@ public class GerenciadorDespesas {
 
 	private static void registraGasto() {
 		// TODO Auto-generated method stub
+		Scanner s = new Scanner(System.in);
+		System.out.println("==== Selecione o dia da Semana =====");
+		System.out.println("1 - Segunda-Feira");
+		System.out.println("2 - Terca-Feira");
+		System.out.println("3 - Quarta-Feira");
+		System.out.println("4 - Quinta-Feira");
+		System.out.println("5 - Sexta-Feira");
+		System.out.println("6 - Sabado");
+		System.out.println("7 - Domingo");
+		dSemana = s.nextInt() -1;
 		
+		System.out.println("================");
+		System.out.println("==== Selecione a Categoria =====");
+		System.out.println("1 - Alimetacao");
+		System.out.println("2 - Transporte");
+		System.out.println("3 - Lazer");
+		System.out.println("4 - Outros");
+		categoria = s.nextInt() -1;
+		System.out.println("================");
+		
+		System.out.println("==== Digite o Valor do Gasto =====");
+		double valor = s.nextDouble();
+		
+		//registra gasto no dia
+		gastosSemana[dSemana] += valor;
+		
+		System.out.println("Gasto registrado: " + valor + " em " + categorias[categoria]);
 	}
 
 	private static void listarCategorias() {
