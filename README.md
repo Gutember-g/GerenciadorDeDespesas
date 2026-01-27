@@ -1,4 +1,5 @@
 Gerenciador de Despesas Diárias 💰
+
 Aplicação de console em Java para registrar e acompanhar gastos ao longo da semana, comparando o total com um orçamento definido e emitindo alertas quando o limite é ultrapassado.
 
 Sobre o projeto
