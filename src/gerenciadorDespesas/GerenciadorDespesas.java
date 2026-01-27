@@ -6,9 +6,11 @@ public class GerenciadorDespesas {
 	static String[] categorias = {"Alimentacao", "Transporte", "Lazer", "Outros"};
 	static String[] diasSemana = {"Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"};
 	static double[] gastosSemana = new double[7]; //7 dias da semana
+	static Scanner s = new Scanner(System.in);
 	static double orcamentoMensal = 2000.0;
 	static int dSemana = 0;
 	static int categoria = 0;
+	static boolean valido;
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -20,13 +22,12 @@ public class GerenciadorDespesas {
 		// TODO Auto-generated method stub
 		int opcao;
 		do {
-			Scanner s = new Scanner(System.in);
 			System.out.println("==== Selecione a Opcao =====");
 			System.out.println("1. Registrar");
 			System.out.println("2. Relatorio Dia");
 			System.out.println("3. Relatorio Semana");
 			System.out.println("4. Sair");
-			opcao = s.nextInt();
+			opcao = lerInteiro("");
 			switch(opcao) {
 			case 1:
 				opcao = 1;
@@ -43,9 +44,11 @@ public class GerenciadorDespesas {
 			case 4:
 				opcao = 4;
 				System.out.println("Ate a proxima!");
+				linha();
 				break;
 			default:
 				System.out.println("Opcao invalida!");
+				linha();
 			}
 		} while (opcao != 4);
 	}
@@ -66,29 +69,35 @@ public class GerenciadorDespesas {
 		}
 		
 		System.out.println("Total gasto na semana = " + total);
+		linha();
 		
 		
 		if(total > orcamentoMensal * 0.8) {
-			System.out.println("Voce passou de 80% do orçamento!!");
+			System.out.println("Voce passou de 80% do orcamento!!");
+			linha();
 		}
 		if(dia != -1) {
 		System.out.println("Maior gasto: R$" + maior + " foi na " + diasSemana[dia]);
+		linha();
 	}}
 
 	private static void relatorioDia() {
 		// TODO Auto-generated method stub
-		Scanner s = new Scanner(System.in);
-		System.out.println("==== Selecione o dia da Semana =====");
-		System.out.println("1 - Segunda-Feira");
-		System.out.println("2 - Terca-Feira");
-		System.out.println("3 - Quarta-Feira");
-		System.out.println("4 - Quinta-Feira");
-		System.out.println("5 - Sexta-Feira");
-		System.out.println("6 - Sabado");
-		System.out.println("7 - Domingo");
-		dSemana = s.nextInt() -1;
 		
-		System.out.println("================");
+		do {
+			System.out.println("==== Selecione o dia da Semana =====");
+			System.out.println("1 - Segunda-Feira");
+			System.out.println("2 - Terca-Feira");
+			System.out.println("3 - Quarta-Feira");
+			System.out.println("4 - Quinta-Feira");
+			System.out.println("5 - Sexta-Feira");
+			System.out.println("6 - Sabado");
+			System.out.println("7 - Domingo");
+			dSemana = lerInteiro("") -1;
+			valido = validarDia(dSemana + 1);
+		} while(!valido);
+		
+		linha();
 		
 		System.out.println("Gastos do dia = " + gastosSemana[dSemana]);
 		if(gastosSemana[dSemana] > 150) {
@@ -98,29 +107,33 @@ public class GerenciadorDespesas {
 
 	private static void registraGasto() {
 		// TODO Auto-generated method stub
-		Scanner s = new Scanner(System.in);
-		System.out.println("==== Selecione o dia da Semana =====");
-		System.out.println("1 - Segunda-Feira");
-		System.out.println("2 - Terca-Feira");
-		System.out.println("3 - Quarta-Feira");
-		System.out.println("4 - Quinta-Feira");
-		System.out.println("5 - Sexta-Feira");
-		System.out.println("6 - Sabado");
-		System.out.println("7 - Domingo");
-		dSemana = s.nextInt() -1;
+		do {
+			System.out.println("==== Selecione o dia da Semana =====");
+			System.out.println("1 - Segunda-Feira");
+			System.out.println("2 - Terca-Feira");
+			System.out.println("3 - Quarta-Feira");
+			System.out.println("4 - Quinta-Feira");
+			System.out.println("5 - Sexta-Feira");
+			System.out.println("6 - Sabado");
+			System.out.println("7 - Domingo");
+			dSemana = lerInteiro("") -1;
+			valido = validarDia(dSemana + 1);
+		}while(!valido);
 		
-		System.out.println("================");
-		System.out.println("==== Selecione a Categoria =====");
-		System.out.println("1 - Alimetacao");
-		System.out.println("2 - Transporte");
-		System.out.println("3 - Lazer");
-		System.out.println("4 - Outros");
-		categoria = s.nextInt() -1;
-		System.out.println("================");
+		do {
+			linha();
+			System.out.println("==== Selecione a Categoria =====");
+			System.out.println("1 - Alimetacao");
+			System.out.println("2 - Transporte");
+			System.out.println("3 - Lazer");
+			System.out.println("4 - Outros");
+			categoria = lerInteiro("") -1;
+			valido = validarCategoria(categoria + 1);
+		}while(!valido);
+		linha();
 		
 		System.out.println("==== Digite o Valor do Gasto =====");
-		double valor = s.nextDouble();
-		
+		double valor = lerDouble("");
 		//registra gasto no dia
 		gastosSemana[dSemana] += valor;
 		
@@ -131,6 +144,40 @@ public class GerenciadorDespesas {
 		for(int i=0; i < categorias.length; i++) {
 			System.out.println(categorias[i]);
 		}
+	}
+	
+	public static int lerInteiro(String mensagem) {
+		System.out.print(mensagem);
+		int valor = 0;
+		try {
+			valor = s.nextInt();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return valor;
+	}
+	
+	public static double lerDouble(String mensagem) {
+		System.out.print(mensagem);
+		double valor = 0;
+		try {
+			valor = s.nextDouble();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return valor;
+	}
+	
+	public static boolean validarDia(int dia) {
+		return dia > 0 && dia <= 7;
+	}
+	
+	public static boolean validarCategoria(int dia) {
+		return dia > 0 && dia <= 4;
+	}
+	
+	public static void linha() {
+		 System.out.println("===========================");
 	}
 
 }
