@@ -25,11 +25,6 @@ public class TransactionController {
         return ResponseEntity.ok(transactions);
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Transaction>> getTransactionsByUser(@PathVariable Long userId) {
-        List<Transaction> transactions = transactionService.getTransactionsByUser(userId);
-        return ResponseEntity.ok(transactions);
-    }
 
     @PostMapping
     public ResponseEntity<List<Transaction>> createTransaction(@RequestBody TransactionRequestDTO transactionDTO) {

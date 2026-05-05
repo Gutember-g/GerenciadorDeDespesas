@@ -10,6 +10,7 @@ import com.saas.gerenciadordespesas.repositories.CategoryRepository;
 import com.saas.gerenciadordespesas.repositories.TransactionRepository;
 import com.saas.gerenciadordespesas.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -35,8 +36,8 @@ public class TransactionService {
     public List<Transaction> createTransactionFromDTO(TransactionRequestDTO dto) {
         Transaction transaction = new Transaction();
 
-        // Hardcoded User 1 for MVP
-        User user = userRepository.findById(1L).orElseThrow(() -> new RuntimeException("User not found"));
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         Account account = accountRepository.findById(dto.getContaId()).orElseThrow(() -> new RuntimeException("Account not found"));
         Category category = categoryRepository.findById(dto.getCategoriaId()).orElseThrow(() -> new RuntimeException("Category not found"));
 
@@ -95,10 +96,11 @@ public class TransactionService {
     }
 
     public List<Transaction> getFilteredTransactions(Integer month, Integer year, String description) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         LocalDate now = LocalDate.now();
         int filterMonth = (month != null) ? month : now.getMonthValue();
         int filterYear = (year != null) ? year : now.getYear();
 
-        return transactionRepository.findFiltered(filterMonth, filterYear, description);
+        return transactionRepository.findFiltered(email, filterMonth, filterYear, description);
     }
 }
