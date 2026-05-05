@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { transactionAPI } from '../services/api';
 import { TrendingUp, TrendingDown, Clock } from 'lucide-react';
 

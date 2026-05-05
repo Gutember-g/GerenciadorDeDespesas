@@ -1,7 +1,14 @@
 package com.saas.gerenciadordespesas.services;
 
+import com.saas.gerenciadordespesas.dto.TransactionRequestDTO;
+import com.saas.gerenciadordespesas.models.Account;
+import com.saas.gerenciadordespesas.models.Category;
 import com.saas.gerenciadordespesas.models.Transaction;
+import com.saas.gerenciadordespesas.models.User;
+import com.saas.gerenciadordespesas.repositories.AccountRepository;
+import com.saas.gerenciadordespesas.repositories.CategoryRepository;
 import com.saas.gerenciadordespesas.repositories.TransactionRepository;
+import com.saas.gerenciadordespesas.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +21,36 @@ public class TransactionService {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    public List<Transaction> createTransactionFromDTO(TransactionRequestDTO dto) {
+        Transaction transaction = new Transaction();
+
+        // Hardcoded User 1 for MVP
+        User user = userRepository.findById(1L).orElseThrow(() -> new RuntimeException("User not found"));
+        Account account = accountRepository.findById(dto.getContaId()).orElseThrow(() -> new RuntimeException("Account not found"));
+        Category category = categoryRepository.findById(dto.getCategoriaId()).orElseThrow(() -> new RuntimeException("Category not found"));
+
+        transaction.setUser(user);
+        transaction.setAccount(account);
+        transaction.setCategory(category);
+        transaction.setDescription(dto.getDescricao());
+        transaction.setAmount(dto.getValorTotal());
+        transaction.setDate(dto.getDataPrimeiraParcela());
+        transaction.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
+        transaction.setIsInstallment(dto.getNumeroParcelas() > 1);
+        transaction.setTotalInstallments(dto.getNumeroParcelas());
+
+        return createTransaction(transaction);
+    }
 
     public List<Transaction> createTransaction(Transaction transaction) {
         List<Transaction> transactionsToSave = new ArrayList<>();

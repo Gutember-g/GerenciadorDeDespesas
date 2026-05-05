@@ -10,6 +10,26 @@ export const dashboardAPI = {
     }
 };
 
+export const accountAPI = {
+    getAccounts: async () => {
+        const response = await fetch(`${API_URL}/accounts`);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar contas');
+        }
+        return response.json();
+    }
+};
+
+export const categoryAPI = {
+    getCategories: async () => {
+        const response = await fetch(`${API_URL}/categories`);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar categorias');
+        }
+        return response.json();
+    }
+};
+
 export const transactionAPI = {
     getTransactionsByUser: async (userId: number) => {
         const response = await fetch(`${API_URL}/transactions/user/${userId}`);
