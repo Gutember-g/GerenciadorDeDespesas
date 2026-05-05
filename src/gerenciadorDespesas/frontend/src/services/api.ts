@@ -1,7 +1,23 @@
 const API_URL = 'http://localhost:8080/api';
 
 export const dashboardAPI = {
-    getSummary: async (userId: number) => {
+    getSummary: async (month?: number, year?: number) => {
+        let url = `${API_URL}/summary`;
+        const params = new URLSearchParams();
+        if (month) params.append('month', month.toString());
+        if (year) params.append('year', year.toString());
+
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar resumo do dashboard');
+        }
+        return response.json();
+    },
+    getLegacySummary: async (userId: number) => {
         const response = await fetch(`${API_URL}/dashboard/summary/${userId}`);
         if (!response.ok) {
             throw new Error('Erro ao carregar resumo do dashboard');
