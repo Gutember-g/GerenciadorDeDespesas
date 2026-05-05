@@ -1,5 +1,6 @@
 package com.saas.gerenciadordespesas.controllers;
 
+import com.saas.gerenciadordespesas.dto.TransactionRequestDTO;
 import com.saas.gerenciadordespesas.models.Transaction;
 import com.saas.gerenciadordespesas.services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +23,8 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<List<Transaction>> createTransaction(@RequestBody Transaction transaction) {
-        List<Transaction> created = transactionService.createTransaction(transaction);
+    public ResponseEntity<List<Transaction>> createTransaction(@RequestBody TransactionRequestDTO transactionDTO) {
+        List<Transaction> created = transactionService.createTransactionFromDTO(transactionDTO);
         return ResponseEntity.ok(created);
     }
 }

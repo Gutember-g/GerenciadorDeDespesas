@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Wallet, Activity, Target, Menu, LayoutDashboard, CreditCard, LogOut, Plus } from 'lucide-react';
 import { dashboardAPI } from './services/api';
-import { TransactionModal } from './components/TransactionModal';
+import { TransactionForm } from './components/TransactionForm';
 import { TransactionList } from './components/TransactionList';
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6'];
@@ -10,7 +10,7 @@ const COLORS = ['#10b981', '#3b82f6', '#8b5cf6'];
 function App() {
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions'>('dashboard');
 
   const fetchSummary = async () => {
@@ -41,13 +41,14 @@ function App() {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row font-sans">
-      <TransactionModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row font-sans overflow-x-hidden">
+      <TransactionForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
         onSuccess={() => {
             if (activeTab === 'dashboard') fetchSummary();
-            // If on transactions tab, it's cool if they handle their own refetch or we just switch
+            // If on transactions tab, we switch to dashboard or the list will naturally be outdated until switch/remount
+            // In a real app we might use a global state or event emitter
             setActiveTab('dashboard');
         }} 
       />
@@ -97,7 +98,7 @@ function App() {
             <p className="text-slate-400 mt-1">Aqui está o seu {activeTab === 'dashboard' ? 'resumo financeiro' : 'extrato detalhado'}.</p>
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsFormOpen(true)}
             className="hidden sm:flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-medium px-4 py-2 rounded-lg transition-colors shadow-lg shadow-emerald-500/20"
           >
             <Plus className="w-5 h-5" />
@@ -158,7 +159,7 @@ function App() {
                             paddingAngle={5}
                             dataKey="value"
                         >
-                            {summary.rule503020Array.map((entry: any, index: number) => (
+                            {summary.rule503020Array.map((_: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
@@ -222,7 +223,7 @@ function App() {
 
       {/* Mobile Fab */}
       <button 
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => setIsFormOpen(true)}
         className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20 flex items-center justify-center text-slate-950 z-40"
       >
         <Plus className="w-6 h-6" />
