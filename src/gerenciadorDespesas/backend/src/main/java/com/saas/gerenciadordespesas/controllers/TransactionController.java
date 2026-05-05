@@ -16,6 +16,15 @@ public class TransactionController {
     @Autowired
     private TransactionService transactionService;
 
+    @GetMapping
+    public ResponseEntity<List<Transaction>> getTransactions(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) String descricao) {
+        List<Transaction> transactions = transactionService.getFilteredTransactions(month, year, descricao);
+        return ResponseEntity.ok(transactions);
+    }
+
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Transaction>> getTransactionsByUser(@PathVariable Long userId) {
         List<Transaction> transactions = transactionService.getTransactionsByUser(userId);

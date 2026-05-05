@@ -3,6 +3,7 @@ import { Menu, Target, LayoutDashboard, CreditCard, LogOut, Plus } from 'lucide-
 import { TransactionForm } from './components/TransactionForm';
 import { TransactionList } from './components/TransactionList';
 import { Dashboard } from './components/Dashboard';
+import { MesProvider } from './contexts/MesContext';
 
 function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -14,6 +15,7 @@ function App() {
   };
 
   return (
+    <MesProvider>
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row font-sans overflow-x-hidden">
       <TransactionForm
         isOpen={isFormOpen}
@@ -81,7 +83,7 @@ function App() {
            <Dashboard refreshTrigger={refreshTrigger} />
         ) : (
             <div className="animate-in fade-in slide-in-from-bottom-2">
-                <TransactionList userId={1} />
+                <TransactionList refreshTrigger={refreshTrigger} />
             </div>
         )}
 
@@ -118,6 +120,7 @@ function App() {
       </div>
 
     </div>
+    </MesProvider>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { dashboardAPI } from '../services/api';
+import { useMes } from '../contexts/MesContext';
 import { SummaryCards } from './dashboard/SummaryCards';
 import { Regra502030 } from './dashboard/Regra502030';
 import { DespesasBarChart } from './dashboard/DespesasBarChart';
@@ -11,18 +12,16 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
+  const { mesAtivo, nextMonth, prevMonth } = useMes();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentDate, setCurrentDate] = useState(new Date());
 
   const fetchSummary = async () => {
     try {
       setLoading(true);
       setError(null);
-      const month = currentDate.getMonth() + 1;
-      const year = currentDate.getFullYear();
-      const summary = await dashboardAPI.getSummary(month, year);
+      const summary = await dashboardAPI.getSummary(mesAtivo.month, mesAtivo.year);
       setData(summary);
     } catch (err) {
       console.error(err);
@@ -34,26 +33,10 @@ export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
 
   useEffect(() => {
     fetchSummary();
-  }, [currentDate, refreshTrigger]);
-
-  const nextMonth = () => {
-    setCurrentDate(prev => {
-      const next = new Date(prev);
-      next.setMonth(prev.getMonth() + 1);
-      return next;
-    });
-  };
-
-  const prevMonth = () => {
-    setCurrentDate(prev => {
-      const p = new Date(prev);
-      p.setMonth(prev.getMonth() - 1);
-      return p;
-    });
-  };
+  }, [mesAtivo, refreshTrigger]);
 
   const formatMonth = () => {
-    return currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+    return new Date(mesAtivo.year, mesAtivo.month - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
   if (loading && !data) {

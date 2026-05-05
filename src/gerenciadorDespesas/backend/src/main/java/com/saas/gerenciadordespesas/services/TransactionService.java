@@ -12,6 +12,7 @@ import com.saas.gerenciadordespesas.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -91,5 +92,13 @@ public class TransactionService {
     
     public List<Transaction> getTransactionsByUser(Long userId) {
         return transactionRepository.findByUserId(userId);
+    }
+
+    public List<Transaction> getFilteredTransactions(Integer month, Integer year, String description) {
+        LocalDate now = LocalDate.now();
+        int filterMonth = (month != null) ? month : now.getMonthValue();
+        int filterYear = (year != null) ? year : now.getYear();
+
+        return transactionRepository.findFiltered(filterMonth, filterYear, description);
     }
 }
