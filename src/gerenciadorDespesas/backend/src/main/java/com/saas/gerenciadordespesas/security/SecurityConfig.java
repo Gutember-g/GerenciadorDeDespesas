@@ -3,6 +3,7 @@ package com.saas.gerenciadordespesas.security;
 import com.saas.gerenciadordespesas.models.User;
 import com.saas.gerenciadordespesas.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +31,7 @@ import java.util.Collections;
 public class SecurityConfig {
 
     @Autowired
+    @Lazy
     private JwtAuthenticationFilter jwtAuthFilter;
 
     @Autowired
