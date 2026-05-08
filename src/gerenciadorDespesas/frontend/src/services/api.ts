@@ -11,14 +11,14 @@ export const dashboardAPI = {
             url += `?${params.toString()}`;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url, { credentials: 'include' });
         if (!response.ok) {
             throw new Error('Erro ao carregar resumo do dashboard');
         }
         return response.json();
     },
     getLegacySummary: async (userId: number) => {
-        const response = await fetch(`${API_URL}/dashboard/summary/${userId}`);
+        const response = await fetch(`${API_URL}/dashboard/summary/${userId}`, { credentials: 'include' });
         if (!response.ok) {
             throw new Error('Erro ao carregar resumo do dashboard');
         }
@@ -28,7 +28,7 @@ export const dashboardAPI = {
 
 export const accountAPI = {
     getAccounts: async () => {
-        const response = await fetch(`${API_URL}/accounts`);
+        const response = await fetch(`${API_URL}/accounts`, { credentials: 'include' });
         if (!response.ok) {
             throw new Error('Erro ao carregar contas');
         }
@@ -38,7 +38,7 @@ export const accountAPI = {
 
 export const categoryAPI = {
     getCategories: async () => {
-        const response = await fetch(`${API_URL}/categories`);
+        const response = await fetch(`${API_URL}/categories`, { credentials: 'include' });
         if (!response.ok) {
             throw new Error('Erro ao carregar categorias');
         }
@@ -48,7 +48,7 @@ export const categoryAPI = {
 
 export const transactionAPI = {
     getTransactionsByUser: async (userId: number) => {
-        const response = await fetch(`${API_URL}/transactions/user/${userId}`);
+        const response = await fetch(`${API_URL}/transactions/user/${userId}`, { credentials: 'include' });
         if (!response.ok) {
             throw new Error('Erro ao carregar transações');
         }
@@ -66,7 +66,7 @@ export const transactionAPI = {
             url += `?${params.toString()}`;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url, { credentials: 'include' });
         if (!response.ok) {
             throw new Error('Erro ao carregar transações filtradas');
         }
@@ -80,6 +80,7 @@ export const transactionAPI = {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(transactionData),
+            credentials: 'include'
         });
         if (!response.ok) {
             throw new Error('Erro ao criar transação');
