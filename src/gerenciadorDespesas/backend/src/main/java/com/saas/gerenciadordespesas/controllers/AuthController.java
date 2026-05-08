@@ -3,6 +3,7 @@ package com.saas.gerenciadordespesas.controllers;
 import com.saas.gerenciadordespesas.models.User;
 import com.saas.gerenciadordespesas.repositories.UserRepository;
 import com.saas.gerenciadordespesas.security.JwtUtil;
+import com.saas.gerenciadordespesas.services.DefaultUserDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,9 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private DefaultUserDataService defaultUserDataService;
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -48,6 +52,7 @@ public class AuthController {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(senha));
         userRepository.save(user);
+        defaultUserDataService.ensureDefaults(user);
 
         String token = jwtUtil.generateToken(user.getEmail());
         ResponseCookie cookie = createJwtCookie(token);

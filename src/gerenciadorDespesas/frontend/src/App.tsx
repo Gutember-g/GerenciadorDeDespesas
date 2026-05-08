@@ -19,7 +19,9 @@ import {
 import { TransactionForm } from './components/TransactionForm';
 import { TransactionList } from './components/TransactionList';
 import { Dashboard } from './components/Dashboard';
+import { LoginPage } from './components/LoginPage';
 import { MesProvider } from './contexts/MesContext';
+import { authAPI } from './services/api';
 
 type ActiveTab = 'dashboard' | 'transactions';
 
@@ -37,6 +39,7 @@ const disabledNavItems = [
 ];
 
 function App() {
+  const [user, setUser] = useState<{ nome?: string; email?: string } | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -44,6 +47,19 @@ function App() {
   const triggerRefresh = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
+
+  const handleLogout = async () => {
+    try {
+      await authAPI.logout();
+    } finally {
+      setUser(null);
+      setActiveTab('dashboard');
+    }
+  };
+
+  if (!user) {
+    return <LoginPage onLogin={setUser} />;
+  }
 
   return (
     <MesProvider>
@@ -118,7 +134,10 @@ function App() {
               </button>
             </div>
 
-            <button className="mt-5 flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-red-300">
+            <button
+              onClick={handleLogout}
+              className="mt-5 flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-red-300"
+            >
               <LogOut className="h-5 w-5" />
               <span>Sair</span>
             </button>
@@ -158,7 +177,7 @@ function App() {
                     <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-amber-200 to-orange-500 text-slate-950">
                       <User className="h-5 w-5" />
                     </div>
-                    <span className="text-sm font-medium text-slate-200">João</span>
+                    <span className="text-sm font-medium text-slate-200">{user.nome || 'Usuário'}</span>
                   </div>
                   <button
                     onClick={() => setIsFormOpen(true)}

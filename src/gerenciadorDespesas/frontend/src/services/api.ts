@@ -1,5 +1,37 @@
 const API_URL = 'http://localhost:8080/api';
 
+export const authAPI = {
+    login: async (email: string, senha: string) => {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, senha }),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('E-mail ou senha inválidos');
+        }
+
+        return response.json();
+    },
+
+    logout: async () => {
+        const response = await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao sair');
+        }
+
+        return response.text();
+    }
+};
+
 export const dashboardAPI = {
     getSummary: async (month?: number, year?: number) => {
         let url = `${API_URL}/summary`;
