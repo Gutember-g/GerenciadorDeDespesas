@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080/api';
+const API_URL = `http://${window.location.hostname}:8080/api`;
 
 export const dashboardAPI = {
     getSummary: async (month?: number, year?: number) => {

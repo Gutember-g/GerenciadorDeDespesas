@@ -42,7 +42,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
       if (cats.length > 0) setCategoryId(cats[0].id.toString());
     } catch (err) {
       console.error("Erro ao carregar dados do formulário", err);
-      setError("Falha ao carregar contas e categorias.");
+      setError("Falha ao carregar contas e categorias. Verifique se o backend está rodando e se você está logado.");
     }
   };
 
@@ -281,10 +281,10 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className={`flex-[2] py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center`}
+                className={`flex-[2] py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-600/50 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center`}
                 >
                 {loading ? (
-                    <div className="w-6 h-6 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin"></div>
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
                     'Salvar Transação'
                 )}
