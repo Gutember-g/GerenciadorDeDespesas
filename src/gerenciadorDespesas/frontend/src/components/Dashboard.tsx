@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { dashboardAPI } from '../services/api';
 import { useMes } from '../contexts/MesContext';
 import { SummaryCards } from './dashboard/SummaryCards';
@@ -8,7 +8,7 @@ import { DespesasBarChart } from './dashboard/DespesasBarChart';
 import { TopCategorias } from './dashboard/TopCategorias';
 
 interface DashboardProps {
-    refreshTrigger?: number;
+  refreshTrigger?: number;
 }
 
 export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
@@ -36,27 +36,30 @@ export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
   }, [mesAtivo, refreshTrigger]);
 
   const formatMonth = () => {
-    return new Date(mesAtivo.year, mesAtivo.month - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+    return new Date(mesAtivo.year, mesAtivo.month - 1).toLocaleString('pt-BR', {
+      month: 'long',
+      year: 'numeric',
+    });
   };
 
   if (loading && !data) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-        <p className="text-slate-400 animate-pulse">Carregando suas finanças...</p>
+      <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
+        <p className="text-slate-400">Carregando suas finanças...</p>
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 bg-slate-900 border border-slate-800 rounded-xl p-8 text-center">
-        <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
-        <h3 className="text-xl font-bold text-slate-100 mb-2">Ops! Algo deu errado</h3>
-        <p className="text-slate-400 mb-6">{error}</p>
+      <div className="flex h-[60vh] flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 p-8 text-center">
+        <AlertCircle className="mb-4 h-12 w-12 text-red-400" />
+        <h3 className="mb-2 text-xl font-bold text-slate-100">Ops! Algo deu errado</h3>
+        <p className="mb-6 text-slate-400">{error}</p>
         <button
           onClick={fetchSummary}
-          className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg transition-colors"
+          className="rounded-xl bg-white/10 px-4 py-2 text-slate-200 transition-colors hover:bg-white/15"
         >
           Tentar novamente
         </button>
@@ -67,75 +70,81 @@ export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
   const allCategories = [
     ...(data.necessidades.categorias || []),
     ...(data.desejos.categorias || []),
-    ...(data.reserva.categorias || [])
+    ...(data.reserva.categorias || []),
   ].sort((a, b) => b.valor - a.valor);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5 animate-in fade-in duration-500">
+      <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-3xl font-semibold">Dashboard</h2>
-          <p className="text-slate-400 mt-1">Visão geral do seu patrimônio em {formatMonth()}.</p>
+          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Olá, João!</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Aqui está o resumo das suas finanças em <span className="capitalize">{formatMonth()}</span>.
+          </p>
         </div>
 
-        <div className="flex items-center space-x-2 bg-slate-900 border border-slate-800 p-1 rounded-xl self-start sm:self-center">
+        <div className="flex w-fit items-center rounded-xl border border-white/10 bg-white/5 p-1">
           <button
             onClick={prevMonth}
-            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+            className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
-          <span className="px-4 font-medium min-w-[140px] text-center capitalize">{formatMonth()}</span>
+          <span className="min-w-[150px] px-4 text-center text-sm font-semibold capitalize">
+            {formatMonth()}
+          </span>
           <button
             onClick={nextMonth}
-            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+            className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
-      </div>
+      </section>
 
       {loading && (
-        <div className="fixed top-20 right-10 z-50">
-           <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+        <div className="fixed right-8 top-24 z-50 rounded-full border border-white/10 bg-[#0d1828] p-3 shadow-xl">
+          <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
         </div>
       )}
 
-      <SummaryCards
-        income={data.totalReceitas}
-        expense={data.totalDespesas}
-        balance={data.saldoTotal}
-      />
+      <SummaryCards income={data.totalReceitas} expense={data.totalDespesas} balance={data.saldoTotal} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Regra502030
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.5fr_1fr]">
+        <DespesasBarChart
+          totalReceitas={data.totalReceitas}
           necessidades={data.necessidades}
           desejos={data.desejos}
           reserva={data.reserva}
         />
-        <DespesasBarChart
-            totalReceitas={data.totalReceitas}
-            necessidades={data.necessidades}
-            desejos={data.desejos}
-            reserva={data.reserva}
-        />
-      </div>
+        <TopCategorias categorias={allCategories} total={data.totalDespesas} />
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-             <TopCategorias categorias={allCategories} />
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">
+        <Regra502030 necessidades={data.necessidades} desejos={data.desejos} reserva={data.reserva} />
+        <div className="rounded-xl border border-white/10 bg-[#0d1828]/80 p-5 shadow-2xl shadow-black/20">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Saúde financeira</h3>
+              <p className="mt-1 text-sm text-slate-400">Reserva comparada à meta do mês</p>
+            </div>
+            <span className="rounded-lg bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+              {data.reserva.percentualReal.toFixed(1)}%
+            </span>
           </div>
-          <div className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl p-6 flex flex-col justify-center">
-             <h4 className="text-lg font-bold text-emerald-400 mb-2">Saúde Financeira</h4>
-             <p className="text-slate-300 text-sm leading-relaxed mb-4">
-                Com base nos seus gastos de {formatMonth()}, você destinou <span className="font-bold text-emerald-400">{data.reserva.percentualReal.toFixed(1)}%</span> para sua reserva.
-             </p>
-             <div className="w-full bg-slate-800/50 rounded-full h-1.5 mb-2">
-                <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${Math.min(data.reserva.percentualReal * 5, 100)}%` }}></div>
-             </div>
-             <span className="text-[10px] text-slate-500 uppercase tracking-wider">Progresso da meta de investimentos</span>
+          <p className="text-sm leading-6 text-slate-300">
+            Em {formatMonth()}, você destinou{' '}
+            <span className="font-semibold text-emerald-300">{data.reserva.percentualReal.toFixed(1)}%</span>{' '}
+            para reserva. O painel acompanha esse ritmo contra a regra 50-30-20.
+          </p>
+          <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400"
+              style={{ width: `${Math.min(data.reserva.percentualReal * 5, 100)}%` }}
+            />
           </div>
-      </div>
+        </div>
+      </section>
     </div>
   );
 };

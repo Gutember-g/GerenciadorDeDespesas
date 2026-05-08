@@ -1,3 +1,5 @@
+import { Car, Plane, ShieldCheck } from 'lucide-react';
+
 interface RuleData {
   valorGasto: number;
   percentualReal: number;
@@ -10,54 +12,84 @@ interface Regra502030Props {
   reserva: RuleData;
 }
 
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
 export const Regra502030 = ({ necessidades, desejos, reserva }: Regra502030Props) => {
-  const renderProgressBar = (label: string, data: RuleData, colorClass: string) => {
-    const { percentualReal, percentualMeta } = data;
-
-    // Determine bar color based on deviation
-    let barColor = colorClass;
-    if (percentualReal > percentualMeta * 1.2) {
-        barColor = 'bg-red-500';
-    } else if (percentualReal > percentualMeta) {
-        barColor = 'bg-amber-500';
-    }
-
-    return (
-      <div className="mb-6 last:mb-0">
-        <div className="flex justify-between items-end mb-2">
-          <div>
-            <span className="text-sm font-medium text-slate-300">{label}</span>
-            <span className="ml-2 text-xs text-slate-500">Meta: {percentualMeta}%</span>
-          </div>
-          <span className={`text-sm font-bold ${percentualReal > percentualMeta ? 'text-red-400' : 'text-emerald-400'}`}>
-            {percentualReal.toFixed(1)}%
-          </span>
-        </div>
-        <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
-          <div
-            className={`h-2.5 rounded-full transition-all duration-500 ${barColor}`}
-            style={{ width: `${Math.min(percentualReal, 100)}%` }}
-          ></div>
-        </div>
-      </div>
-    );
-  };
+  const goals = [
+    {
+      label: 'Necessidades',
+      description: 'Moradia, alimentação e transporte',
+      data: necessidades,
+      icon: ShieldCheck,
+      color: '#22c55e',
+    },
+    {
+      label: 'Desejos',
+      description: 'Lazer, compras e experiências',
+      data: desejos,
+      icon: Plane,
+      color: '#4f67ff',
+    },
+    {
+      label: 'Reserva',
+      description: 'Emergência e investimentos',
+      data: reserva,
+      icon: Car,
+      color: '#facc15',
+    },
+  ];
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm h-full">
-      <h3 className="text-xl font-semibold mb-6 flex justify-between items-center">
-        Regra 50-30-20
-        <span className="text-xs font-normal text-slate-400 bg-slate-800 px-2 py-1 rounded-md">Metas vs Real</span>
-      </h3>
+    <div className="rounded-xl border border-white/10 bg-[#0d1828]/80 p-5 shadow-2xl shadow-black/20">
+      <div className="mb-6 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Metas financeiras</h3>
+        <span className="rounded-lg bg-white/5 px-3 py-1 text-xs font-medium text-slate-400">50-30-20</span>
+      </div>
 
-      {renderProgressBar('Necessidades', necessidades, 'bg-blue-500')}
-      {renderProgressBar('Desejos', desejos, 'bg-amber-500')}
-      {renderProgressBar('Reserva', reserva, 'bg-emerald-500')}
+      <div className="space-y-5">
+        {goals.map((goal) => {
+          const Icon = goal.icon;
+          const progress = goal.data.percentualMeta
+            ? Math.min((goal.data.percentualReal / goal.data.percentualMeta) * 100, 100)
+            : 0;
 
-      <div className="mt-8 p-4 bg-slate-800/40 rounded-lg border border-slate-700/50">
-        <p className="text-xs text-slate-400 leading-relaxed">
-          <span className="font-bold text-slate-300">Dica:</span> Mantenha suas necessidades abaixo de 50% para garantir saúde financeira a longo prazo.
-        </p>
+          return (
+            <div key={goal.label} className="border-b border-white/10 pb-5 last:border-0 last:pb-0">
+              <div className="flex items-center gap-4">
+                <div
+                  className="grid h-12 w-12 shrink-0 place-items-center rounded-full"
+                  style={{ backgroundColor: `${goal.color}18`, color: goal.color }}
+                >
+                  <Icon className="h-6 w-6" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-100">{goal.label}</p>
+                      <p className="text-xs text-slate-500">{goal.description}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-200">{goal.data.percentualReal.toFixed(0)}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${progress}%`,
+                        backgroundColor: goal.color,
+                        boxShadow: `0 0 20px ${goal.color}55`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-400">
+                    {formatCurrency(goal.data.valorGasto)} de uma meta de {goal.data.percentualMeta}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

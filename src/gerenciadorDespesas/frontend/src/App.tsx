@@ -1,125 +1,218 @@
 import { useState } from 'react';
-import { Menu, Target, LayoutDashboard, CreditCard, LogOut, Plus } from 'lucide-react';
+import {
+  Bell,
+  ChartNoAxesColumnIncreasing,
+  CreditCard,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Moon,
+  Plus,
+  ReceiptText,
+  Search,
+  Settings,
+  Target,
+  User,
+  WalletCards,
+} from 'lucide-react';
 import { TransactionForm } from './components/TransactionForm';
 import { TransactionList } from './components/TransactionList';
 import { Dashboard } from './components/Dashboard';
 import { MesProvider } from './contexts/MesContext';
 
+type ActiveTab = 'dashboard' | 'transactions';
+
+const navItems = [
+  { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'transactions' as const, label: 'Transações', icon: ReceiptText },
+];
+
+const disabledNavItems = [
+  { label: 'Categorias', icon: WalletCards },
+  { label: 'Metas', icon: Target },
+  { label: 'Cartões', icon: CreditCard },
+  { label: 'Relatórios', icon: ChartNoAxesColumnIncreasing },
+  { label: 'Configurações', icon: Settings },
+];
+
 function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions'>('dashboard');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const triggerRefresh = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
     <MesProvider>
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row font-sans overflow-x-hidden">
-      <TransactionForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSuccess={() => {
+      <div className="min-h-screen overflow-x-hidden bg-[#07111f] text-slate-100 font-sans">
+        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(55,138,221,0.18),transparent_28%),radial-gradient(circle_at_78%_8%,rgba(139,92,246,0.14),transparent_24%),linear-gradient(180deg,#07111f_0%,#081323_45%,#050b14_100%)]" />
+
+        <TransactionForm
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          onSuccess={() => {
             triggerRefresh();
             setActiveTab('dashboard');
-        }} 
-      />
+          }}
+        />
 
-      {/* Mobile Header */}
-      <div className="md:hidden flex justify-between items-center p-4 bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">GerenciaSaaS</h1>
-        <Menu className="w-6 h-6 text-slate-400" />
-      </div>
+        <div className="relative flex min-h-screen">
+          <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-white/10 bg-[#081321]/90 px-5 py-6 backdrop-blur-xl">
+            <div className="mb-10 flex items-center gap-3 px-1">
+              <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg shadow-blue-500/25">
+                <ChartNoAxesColumnIncreasing className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight">
+                Finan<span className="text-blue-400">Control</span>
+              </h1>
+            </div>
 
-      {/* Sidebar Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 h-screen p-6 sticky top-0">
-        <h1 className="text-2xl font-bold mb-10 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">GerenciaSaaS</h1>
-        <nav className="flex-1 space-y-4">
-          <button 
+            <nav className="flex-1 space-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/20'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+
+              {disabledNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.label}
+                    className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-200"
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="mt-6 rounded-xl border border-indigo-400/20 bg-gradient-to-br from-indigo-500/20 to-blue-500/10 p-4">
+              <div className="mb-4 grid h-9 w-9 place-items-center rounded-full bg-amber-400/20 text-amber-300">
+                <WalletCards className="h-5 w-5" />
+              </div>
+              <h2 className="font-semibold">Seja Premium</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Tenha relatórios avançados e metas inteligentes.
+              </p>
+              <button className="mt-5 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20">
+                Assinar agora
+              </button>
+            </div>
+
+            <button className="mt-5 flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-red-300">
+              <LogOut className="h-5 w-5" />
+              <span>Sair</span>
+            </button>
+          </aside>
+
+          <main className="flex-1 pb-24 lg:pb-10">
+            <div className="sticky top-0 z-30 border-b border-white/10 bg-[#07111f]/80 px-4 py-4 backdrop-blur-xl md:px-8 lg:px-10">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 lg:hidden">
+                  <button className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-300">
+                    <Menu className="h-5 w-5" />
+                  </button>
+                  <h1 className="text-xl font-bold">
+                    Finan<span className="text-blue-400">Control</span>
+                  </h1>
+                </div>
+
+                <label className="relative hidden w-full max-w-md md:block">
+                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+                  <input
+                    className="h-12 w-full rounded-xl border border-white/10 bg-[#0d1828] pl-12 pr-4 text-sm text-slate-200 outline-none transition focus:border-blue-500/60 focus:ring-4 focus:ring-blue-500/10"
+                    placeholder="Buscar transações, categorias..."
+                  />
+                </label>
+
+                <div className="ml-auto flex items-center gap-3">
+                  <button className="hidden h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:text-white md:grid">
+                    <Moon className="h-5 w-5" />
+                  </button>
+                  <button className="relative hidden h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:text-white md:grid">
+                    <Bell className="h-5 w-5" />
+                    <span className="absolute right-2 top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                      3
+                    </span>
+                  </button>
+                  <div className="hidden items-center gap-3 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-3 md:flex">
+                    <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-amber-200 to-orange-500 text-slate-950">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-200">João</span>
+                  </div>
+                  <button
+                    onClick={() => setIsFormOpen(true)}
+                    className="hidden items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:brightness-110 sm:flex"
+                  >
+                    <Plus className="h-5 w-5" />
+                    <span>Nova transação</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 lg:px-10">
+              {activeTab === 'dashboard' ? (
+                <Dashboard refreshTrigger={refreshTrigger} />
+              ) : (
+                <TransactionList refreshTrigger={refreshTrigger} />
+              )}
+            </div>
+          </main>
+        </div>
+
+        <button
+          onClick={() => setIsFormOpen(true)}
+          className="fixed bottom-8 left-1/2 z-40 grid h-16 w-16 -translate-x-1/2 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 text-white shadow-2xl shadow-blue-600/40 lg:hidden"
+        >
+          <Plus className="h-7 w-7" />
+        </button>
+
+        <div className="fixed bottom-0 left-0 z-30 grid w-full grid-cols-4 border-t border-white/10 bg-[#081321]/95 px-4 pb-3 pt-2 backdrop-blur-xl lg:hidden">
+          <button
             onClick={() => setActiveTab('dashboard')}
-            className={`w-full flex items-center space-x-3 font-medium p-2 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'text-emerald-400 bg-slate-800/50' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`flex flex-col items-center gap-1 text-[11px] ${activeTab === 'dashboard' ? 'text-white' : 'text-slate-500'}`}
           >
-            <LayoutDashboard className="w-5 h-5" />
-            <span>Dashboard</span>
+            <Home className="h-5 w-5" />
+            <span>Início</span>
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('transactions')}
-            className={`w-full flex items-center space-x-3 font-medium p-2 rounded-lg transition-colors ${activeTab === 'transactions' ? 'text-emerald-400 bg-slate-800/50' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`flex flex-col items-center gap-1 text-[11px] ${activeTab === 'transactions' ? 'text-white' : 'text-slate-500'}`}
           >
-            <CreditCard className="w-5 h-5" />
+            <ReceiptText className="h-5 w-5" />
             <span>Transações</span>
           </button>
-          <button className="w-full flex items-center space-x-3 text-slate-400 hover:text-slate-200 transition-colors p-2 rounded-lg">
-            <Target className="w-5 h-5" />
+          <button className="flex flex-col items-center gap-1 text-[11px] text-slate-500">
+            <Target className="h-5 w-5" />
             <span>Metas</span>
           </button>
-        </nav>
-        <div className="pt-6 border-t border-slate-800">
-          <button className="w-full flex items-center space-x-3 text-slate-400 hover:text-red-400 transition-colors p-2 rounded-lg">
-            <LogOut className="w-5 h-5" />
-            <span>Sair</span>
+          <button className="flex flex-col items-center gap-1 text-[11px] text-slate-500">
+            <User className="h-5 w-5" />
+            <span>Perfil</span>
           </button>
         </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-        <header className="mb-8 flex justify-between items-center">
-          <div className="hidden sm:block">
-            <h2 className="text-2xl font-semibold">Olá, Usuário 👋</h2>
-            <p className="text-slate-400 mt-1">Bem-vindo ao seu painel financeiro.</p>
-          </div>
-          <button 
-            onClick={() => setIsFormOpen(true)}
-            className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-medium px-4 py-2 rounded-lg transition-colors shadow-lg shadow-emerald-500/20 ml-auto"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Nova Transação</span>
-          </button>
-        </header>
-
-        {activeTab === 'dashboard' ? (
-           <Dashboard refreshTrigger={refreshTrigger} />
-        ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-2">
-                <TransactionList refreshTrigger={refreshTrigger} />
-            </div>
-        )}
-
-      </main>
-
-      {/* Mobile Fab */}
-      <button 
-        onClick={() => setIsFormOpen(true)}
-        className="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20 flex items-center justify-center text-slate-950 z-40"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
-
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-slate-900 border-t border-slate-800 flex justify-around p-3 z-30">
-          <button 
-            onClick={() => setActiveTab('dashboard')}
-            className={`flex flex-col items-center ${activeTab === 'dashboard' ? 'text-emerald-400' : 'text-slate-500'}`}
-          >
-              <LayoutDashboard className="w-5 h-5 mb-1" />
-              <span className="text-[10px]">Início</span>
-          </button>
-          <button 
-             onClick={() => setActiveTab('transactions')}
-             className={`flex flex-col items-center ${activeTab === 'transactions' ? 'text-emerald-400' : 'text-slate-500'}`}
-          >
-              <CreditCard className="w-5 h-5 mb-1" />
-              <span className="text-[10px]">Extrato</span>
-          </button>
-          <button className={`flex flex-col items-center text-slate-500`}>
-              <Target className="w-5 h-5 mb-1" />
-              <span className="text-[10px]">Metas</span>
-          </button>
       </div>
-
-    </div>
     </MesProvider>
   );
 }

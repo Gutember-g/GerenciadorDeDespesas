@@ -1,11 +1,14 @@
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
   BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
@@ -13,6 +16,9 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,
+  PointElement,
+  Filler,
   Title,
   Tooltip,
   Legend
@@ -35,22 +41,25 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             let label = context.dataset.label || '';
-            if (label) {
-                label += ': ';
-            }
+            if (label) label += ': ';
             if (context.parsed.y !== null) {
-                label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+              label += new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(context.parsed.y);
             }
             return label;
-          }
+          },
         },
-        backgroundColor: '#1e293b',
-        titleColor: '#f1f5f9',
-        bodyColor: '#f1f5f9',
-        borderColor: '#334155',
+        backgroundColor: '#0d1828',
+        titleColor: '#f8fafc',
+        bodyColor: '#cbd5e1',
+        borderColor: 'rgba(255,255,255,0.1)',
         borderWidth: 1,
+        padding: 12,
+        cornerRadius: 10,
       },
     },
     scales: {
@@ -61,23 +70,31 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
         ticks: {
           color: '#94a3b8',
         },
+        border: {
+          display: false,
+        },
       },
       y: {
         grid: {
-          color: '#334155',
+          color: 'rgba(148, 163, 184, 0.12)',
         },
         ticks: {
           color: '#94a3b8',
-          callback: function(value: any) {
-            return new Intl.NumberFormat('pt-BR', { notation: 'compact', compactDisplay: 'short' }).format(value);
+          callback: function (value: any) {
+            return new Intl.NumberFormat('pt-BR', {
+              notation: 'compact',
+              compactDisplay: 'short',
+            }).format(value);
           },
+        },
+        border: {
+          display: false,
         },
       },
     },
   };
 
   const labels = ['Necessidades', 'Desejos', 'Reserva'];
-
   const metaNecessidades = (necessidades.percentualMeta / 100) * totalReceitas;
   const metaDesejos = (desejos.percentualMeta / 100) * totalReceitas;
   const metaReserva = (reserva.percentualMeta / 100) * totalReceitas;
@@ -86,50 +103,44 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
     labels,
     datasets: [
       {
-        label: 'Gasto Real',
+        label: 'Gasto real',
         data: [necessidades.valorGasto, desejos.valorGasto, reserva.valorGasto],
-        backgroundColor: [
-          '#378ADD', // Necessidades
-          '#EF9F27', // Desejos
-          '#639922', // Reserva
-        ],
-        borderRadius: 4,
+        backgroundColor: ['#378ADD', '#EF9F27', '#22C55E'],
+        borderRadius: 8,
+        borderSkipped: false,
       },
       {
         label: 'Meta',
         data: [metaNecessidades, metaDesejos, metaReserva],
-        backgroundColor: [
-          'rgba(55, 138, 221, 0.35)',
-          'rgba(239, 159, 39, 0.35)',
-          'rgba(99, 153, 34, 0.35)',
-        ],
-        borderColor: [
-            '#378ADD',
-            '#EF9F27',
-            '#639922',
-        ],
+        backgroundColor: ['rgba(55, 138, 221, 0.22)', 'rgba(239, 159, 39, 0.22)', 'rgba(34, 197, 94, 0.22)'],
+        borderColor: ['#378ADD', '#EF9F27', '#22C55E'],
         borderWidth: 1,
-        borderDash: [5, 5],
-        borderRadius: 4,
+        borderRadius: 8,
+        borderSkipped: false,
       },
     ],
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-      <h3 className="text-xl font-semibold mb-6">Comparativo de Gastos</h3>
-      <div className="h-64">
+    <div className="rounded-xl border border-white/10 bg-[#0d1828]/80 p-5 shadow-2xl shadow-black/20">
+      <div className="mb-6 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Comparativo de gastos</h3>
+        <span className="rounded-lg bg-white/5 px-3 py-1 text-xs font-medium text-slate-400">
+          Mês atual
+        </span>
+      </div>
+      <div className="h-72">
         <Bar options={options} data={data} />
       </div>
-      <div className="flex justify-center space-x-8 mt-6">
-          <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-slate-500 rounded-sm"></div>
-              <span className="text-sm text-slate-400">Gasto real</span>
-          </div>
-          <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 border border-dashed border-slate-500 rounded-sm bg-slate-500/20"></div>
-              <span className="text-sm text-slate-400">Meta</span>
-          </div>
+      <div className="mt-5 flex justify-center gap-6 text-xs text-slate-400">
+        <div className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded bg-blue-500" />
+          <span>Gasto real</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded border border-dashed border-blue-300 bg-blue-500/20" />
+          <span>Meta</span>
+        </div>
       </div>
     </div>
   );
