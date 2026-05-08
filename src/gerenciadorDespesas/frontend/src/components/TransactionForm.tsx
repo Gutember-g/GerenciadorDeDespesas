@@ -241,7 +241,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 id="account"
                 value={accountId}
                 onChange={e => setAccountId(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-emerald-500 transition-colors appearance-none"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-emerald-500 transition-colors"
               >
                 {accounts.map(acc => (
                     <option key={acc.id} value={acc.id}>{acc.name}</option>
@@ -259,7 +259,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 id="category"
                 value={categoryId}
                 onChange={e => setCategoryId(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-emerald-500 transition-colors appearance-none"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-emerald-500 transition-colors"
               >
                 {categories.map(cat => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
