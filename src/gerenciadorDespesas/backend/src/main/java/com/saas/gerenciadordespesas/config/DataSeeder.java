@@ -1,15 +1,16 @@
 package com.saas.gerenciadordespesas.config;
 
-import com.saas.gerenciadordespesas.models.User;
-import com.saas.gerenciadordespesas.models.Account;
-import com.saas.gerenciadordespesas.models.Category;
-import com.saas.gerenciadordespesas.repositories.AccountRepository;
-import com.saas.gerenciadordespesas.repositories.CategoryRepository;
-import com.saas.gerenciadordespesas.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import com.saas.gerenciadordespesas.models.Account;
+import com.saas.gerenciadordespesas.models.Category;
+import com.saas.gerenciadordespesas.models.User;
+import com.saas.gerenciadordespesas.repositories.AccountRepository;
+import com.saas.gerenciadordespesas.repositories.CategoryRepository;
+import com.saas.gerenciadordespesas.repositories.UserRepository;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -28,31 +29,45 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (userRepository.count() == 0) {
-            // Seed base user
-            User user = new User();
-            user.setName("Usuário Teste");
-            user.setEmail("admin@gerenciasaas.com");
-            user.setPasswordHash(passwordEncoder.encode("admin123"));
-            userRepository.save(user);
+        try {
+            System.out.println("🔍 Testando conexão com o banco de dados...");
+            // Realiza uma operação simples de contagem para validar a comunicação
+            long count = userRepository.count();
+            System.out.println("📡 Conexão estabelecida com sucesso! Total de usuários no banco: " + count);
 
-            // Seed base account
-            Account acc = new Account();
-            acc.setName("Conta Corrente Principal");
-            acc.setUser(user);
-            acc.setType("CORRENTE");
-            accountRepository.save(acc);
+            if (count == 0) {
+                System.out.println("🌱 Banco vazio. Inicializando sementes de dados...");
+                
+                // Seed base user
+                User user = new User();
+                user.setName("Usuário Teste");
+                user.setEmail("admin@gerenciasaas.com");
+                user.setPasswordHash(passwordEncoder.encode("admin123"));
+                userRepository.save(user);
 
-            // Seed categories
-            createCategory(user, "Supermercado", "EXPENSE", "ESSENTIAL", "#10b981");
-            createCategory(user, "Moradia", "EXPENSE", "ESSENTIAL", "#3b82f6");
-            createCategory(user, "Lazer e Restaurantes", "EXPENSE", "WANTS", "#f59e0b");
-            createCategory(user, "Streaming e Assinaturas", "EXPENSE", "WANTS", "#8b5cf6");
-            createCategory(user, "Transferência Poupança", "EXPENSE", "SAVINGS", "#6366f1");
-            createCategory(user, "Salário", "INCOME", null, "#22c55e");
-            createCategory(user, "Rendimentos", "INCOME", null, "#14b8a6");
-            
-            System.out.println("✅ Banco de dados populado via DataSeeder.");
+                // Seed base account
+                Account acc = new Account();
+                acc.setName("Conta Corrente Principal");
+                acc.setUser(user);
+                acc.setType("CORRENTE");
+                accountRepository.save(acc);
+
+                // Seed categories
+                createCategory(user, "Supermercado", "EXPENSE", "ESSENTIAL", "#10b981");
+                createCategory(user, "Moradia", "EXPENSE", "ESSENTIAL", "#3b82f6");
+                createCategory(user, "Lazer e Restaurantes", "EXPENSE", "WANTS", "#f59e0b");
+                createCategory(user, "Streaming e Assinaturas", "EXPENSE", "WANTS", "#8b5cf6");
+                createCategory(user, "Transferência Poupança", "EXPENSE", "SAVINGS", "#6366f1");
+                createCategory(user, "Salário", "INCOME", null, "#22c55e");
+                createCategory(user, "Rendimentos", "INCOME", null, "#14b8a6");
+                
+                System.out.println("✅ Banco de dados populado com sucesso via DataSeeder.");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ ERRO CRÍTICO: Não foi possível conectar ao banco de dados.");
+            System.err.println("👉 Verifique seu application.properties e o checklist em 'DB_CONNECTION_CHECKLIST.md'.");
+            System.err.println("Mensagem técnica: " + e.getMessage());
+            throw e; // Interrompe a subida do servidor em caso de erro no banco
         }
     }
 

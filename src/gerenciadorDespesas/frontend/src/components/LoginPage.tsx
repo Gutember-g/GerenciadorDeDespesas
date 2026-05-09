@@ -21,8 +21,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     try {
       const user = await authAPI.login(email, senha);
       onLogin(user);
-    } catch (err: any) {
-      setError(err.message || 'Não foi possível entrar.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível entrar.');
     } finally {
       setLoading(false);
     }
