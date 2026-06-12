@@ -10,6 +10,7 @@ public class TransactionRequestDTO {
     private String tipo; // "DEBITO" or "CREDITO"
     private Long contaId;
     private Long categoriaId;
+    private String meioPagamento;
 
     public TransactionRequestDTO() {
     }
@@ -68,5 +69,13 @@ public class TransactionRequestDTO {
 
     public void setCategoriaId(Long categoriaId) {
         this.categoriaId = categoriaId;
+    }
+
+    public String getMeioPagamento() {
+        return meioPagamento;
+    }
+
+    public void setMeioPagamento(String meioPagamento) {
+        this.meioPagamento = meioPagamento;
     }
 }

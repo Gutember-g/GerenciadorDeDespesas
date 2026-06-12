@@ -3,6 +3,7 @@ package com.saas.gerenciadordespesas.services;
 import com.saas.gerenciadordespesas.dto.CategorySummaryDTO;
 import com.saas.gerenciadordespesas.dto.RuleSummaryDTO;
 import com.saas.gerenciadordespesas.dto.SummaryDTO;
+import com.saas.gerenciadordespesas.dto.InstallmentPurchaseDTO;
 import com.saas.gerenciadordespesas.models.Transaction;
 import com.saas.gerenciadordespesas.repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +70,115 @@ public class DashboardService {
         summary.setTotalDespesas(totalDespesas);
         summary.setSaldoTotal(totalReceitas - totalDespesas);
 
+        // 1. Fatura Prevista do Cartão (Despesas de Crédito no mês)
+        Double faturaPrevistaCartao = monthTransactions.stream()
+                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) && "CREDITO".equalsIgnoreCase(t.getPaymentMethod()))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+        summary.setFaturaPrevistaCartao(faturaPrevistaCartao);
+
+        // 2. Saldo acumulado na Reserva de Emergência (historicamente)
+        Double emergencyAcumulado = allTransactions.stream()
+                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                             t.getCategory() != null &&
+                             "Reserva de emergência".equalsIgnoreCase(t.getCategory().getName()))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+        summary.setSaldoReservaEmergencia(emergencyAcumulado);
+        summary.setEmergencyAcumulado(emergencyAcumulado);
+
+        // 3. Reserva de Emergência: Meta (6x Necessidades do mês ativo)
+        Double totalNecessidades = monthTransactions.stream()
+                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                             t.getCategory() != null &&
+                             "Necessidades".equalsIgnoreCase(getPortugueseParentCategory(t.getCategory().getBudgetRuleType())))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+        Double emergencyMeta = totalNecessidades * 6;
+        if (emergencyMeta == 0.0) {
+            emergencyMeta = 6000.0; // Valor de contingência padrão
+        }
+        summary.setEmergencyMeta(emergencyMeta);
+
+        Double emergencyFalta = Math.max(0.0, emergencyMeta - emergencyAcumulado);
+        summary.setEmergencyFalta(emergencyFalta);
+        summary.setEmergencyPercentual(emergencyMeta > 0 ? (emergencyAcumulado / emergencyMeta) * 100 : 0.0);
+
+        // Aporte mensal planejado: soma das prioridades financeiras no mês corrente
+        Double totalPrioridades = monthTransactions.stream()
+                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                             t.getCategory() != null &&
+                             "Prioridades financeiras".equalsIgnoreCase(getPortugueseParentCategory(t.getCategory().getBudgetRuleType())))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+        Double emergencyAporteMensal = totalPrioridades > 0 ? totalPrioridades : 500.0; // padrão
+        summary.setEmergencyAporteMensal(emergencyAporteMensal);
+
+        Double emergencyPrazoEstimado = emergencyAporteMensal > 0 ? (emergencyFalta / emergencyAporteMensal) : 0.0;
+        summary.setEmergencyPrazoEstimado(emergencyPrazoEstimado);
+
+        // 4. Meios de Pagamento do Mês
+        summary.setTotalCreditoMes(faturaPrevistaCartao);
+        
+        Double totalDebitoPixEspecieMes = monthTransactions.stream()
+                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                             t.getPaymentMethod() != null &&
+                             !"CREDITO".equalsIgnoreCase(t.getPaymentMethod()))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+        summary.setTotalDebitoPixEspecieMes(totalDebitoPixEspecieMes);
+
+        // Parcelados na fatura
+        Double totalParceladosFatura = monthTransactions.stream()
+                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                             "CREDITO".equalsIgnoreCase(t.getPaymentMethod()) &&
+                             t.getIsInstallment() != null &&
+                             t.getIsInstallment())
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+        summary.setTotalParceladosFatura(totalParceladosFatura);
+
+        // Categoria que mais pesa no cartão
+        Map<String, Double> creditByCat = monthTransactions.stream()
+                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                             "CREDITO".equalsIgnoreCase(t.getPaymentMethod()) &&
+                             t.getCategory() != null)
+                .collect(Collectors.groupingBy(t -> t.getCategory().getName(), Collectors.summingDouble(Transaction::getAmount)));
+        String categoriaMaisPesadaCartao = creditByCat.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("Nenhuma despesa");
+        summary.setCategoriaMaisPesadaCartao(categoriaMaisPesadaCartao);
+
+        // 5. Compras Parceladas ativas no mês
+        List<InstallmentPurchaseDTO> comprasParceladas = new ArrayList<>();
+        List<Transaction> activeInstallments = monthTransactions.stream()
+                .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                             t.getIsInstallment() != null &&
+                             t.getIsInstallment())
+                .collect(Collectors.toList());
+
+        for (Transaction t : activeInstallments) {
+            String name = t.getDescription() != null ? t.getDescription().replaceAll(" \\(\\d+/\\d+\\)$", "") : "Compra parcelada";
+            Double installmentAmount = t.getAmount();
+            Integer current = t.getCurrentInstallment() != null ? t.getCurrentInstallment() : 1;
+            Integer total = t.getTotalInstallments() != null ? t.getTotalInstallments() : 1;
+            Double remaining = Math.max(0.0, (total - current) * installmentAmount);
+
+            // Projeção para os próximos 3 meses
+            List<Double> proj = new ArrayList<>();
+            for (int m = 1; m <= 3; m++) {
+                if (current + m <= total) {
+                    proj.add(installmentAmount);
+                } else {
+                    proj.add(0.0);
+                }
+            }
+            comprasParceladas.add(new InstallmentPurchaseDTO(name, installmentAmount, current, total, remaining, proj));
+        }
+        summary.setComprasParceladas(comprasParceladas);
+
+        // Regras 50-30-20
         summary.setNecessidades(calculateRuleSummary("ESSENTIAL", monthTransactions, totalReceitas, 50.0));
         summary.setDesejos(calculateRuleSummary("WANTS", monthTransactions, totalReceitas, 30.0));
         summary.setReserva(calculateRuleSummary("SAVINGS", monthTransactions, totalReceitas, 20.0));
@@ -76,11 +186,29 @@ public class DashboardService {
         return summary;
     }
 
+    private String getPortugueseParentCategory(String ruleType) {
+        if (ruleType == null) return "Necessidades";
+        switch (ruleType.toUpperCase()) {
+            case "ESSENTIAL":
+            case "NECESSIDADES":
+                return "Necessidades";
+            case "WANTS":
+            case "DESEJOS":
+                return "Desejos";
+            case "SAVINGS":
+            case "PRIORIDADES FINANCEIRAS":
+            case "PRIORIDADES_FINANCEIRAS":
+                return "Prioridades financeiras";
+            default:
+                return "Necessidades";
+        }
+    }
+
     private RuleSummaryDTO calculateRuleSummary(String ruleType, List<Transaction> transactions, Double totalIncome, Double meta) {
         List<Transaction> ruleExpenses = transactions.stream()
                 .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
                              t.getCategory() != null &&
-                             ruleType.equalsIgnoreCase(t.getCategory().getBudgetRuleType()))
+                             getNormalizedRuleType(ruleType).equals(getNormalizedRuleType(t.getCategory().getBudgetRuleType())))
                 .collect(Collectors.toList());
 
         Double valorGasto = ruleExpenses.stream().mapToDouble(Transaction::getAmount).sum();
@@ -99,5 +227,23 @@ public class DashboardService {
         Double percentualReal = (totalIncome > 0) ? (valorGasto / totalIncome) * 100 : 0.0;
 
         return new RuleSummaryDTO(valorGasto, percentualReal, meta, categorias);
+    }
+
+    private String getNormalizedRuleType(String ruleType) {
+        if (ruleType == null) return "";
+        switch (ruleType.toUpperCase()) {
+            case "ESSENTIAL":
+            case "NECESSIDADES":
+                return "ESSENTIAL";
+            case "WANTS":
+            case "DESEJOS":
+                return "WANTS";
+            case "SAVINGS":
+            case "PRIORIDADES FINANCEIRAS":
+            case "PRIORIDADES_FINANCEIRAS":
+                return "SAVINGS";
+            default:
+                return ruleType.toUpperCase();
+        }
     }
 }

@@ -75,6 +75,21 @@ export const categoryAPI = {
             throw new Error('Erro ao carregar categorias');
         }
         return response.json();
+    },
+
+    createCategory: async (categoryData: { name: string; type: string; budgetRuleType: string; color: string }) => {
+        const response = await fetch(`${API_URL}/categories`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(categoryData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao criar subcategoria');
+        }
+        return response.json();
     }
 };
 

@@ -34,6 +34,10 @@ public class TransactionService {
     private CategoryRepository categoryRepository;
 
     public List<Transaction> createTransactionFromDTO(TransactionRequestDTO dto) {
+        if (dto.getCategoriaId() == null) {
+            throw new IllegalArgumentException("A subcategoria é obrigatória.");
+        }
+
         Transaction transaction = new Transaction();
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -44,6 +48,12 @@ public class TransactionService {
         transaction.setUser(user);
         transaction.setAccount(account);
         transaction.setCategory(category);
+        transaction.setParentCategory(getPortugueseParentCategory(category.getBudgetRuleType()));
+        if (dto.getNumeroParcelas() != null && dto.getNumeroParcelas() > 1) {
+            transaction.setPaymentMethod("CREDITO");
+        } else {
+            transaction.setPaymentMethod(dto.getMeioPagamento() != null ? dto.getMeioPagamento() : "DEBITO");
+        }
         transaction.setDescription(dto.getDescricao());
         transaction.setAmount(dto.getValorTotal());
         transaction.setDate(dto.getDataPrimeiraParcela());
@@ -57,6 +67,13 @@ public class TransactionService {
     public List<Transaction> createTransaction(Transaction transaction) {
         List<Transaction> transactionsToSave = new ArrayList<>();
 
+        if (transaction.getCategory() == null) {
+            throw new IllegalArgumentException("A subcategoria é obrigatória.");
+        }
+        if (transaction.getParentCategory() == null) {
+            transaction.setParentCategory(getPortugueseParentCategory(transaction.getCategory().getBudgetRuleType()));
+        }
+
         if (transaction.getIsInstallment() != null && transaction.getIsInstallment() && transaction.getTotalInstallments() > 1) {
             String groupId = UUID.randomUUID().toString();
             Double installmentAmount = transaction.getAmount() / transaction.getTotalInstallments();
@@ -66,6 +83,8 @@ public class TransactionService {
                 installment.setUser(transaction.getUser());
                 installment.setAccount(transaction.getAccount());
                 installment.setCategory(transaction.getCategory());
+                installment.setParentCategory(transaction.getParentCategory());
+                installment.setPaymentMethod(transaction.getPaymentMethod());
                 installment.setType(transaction.getType());
                 installment.setDescription(transaction.getDescription() + " (" + i + "/" + transaction.getTotalInstallments() + ")");
                 
@@ -102,5 +121,23 @@ public class TransactionService {
         int filterYear = (year != null) ? year : now.getYear();
 
         return transactionRepository.findFiltered(email, filterMonth, filterYear, description);
+    }
+
+    private String getPortugueseParentCategory(String ruleType) {
+        if (ruleType == null) return "Necessidades";
+        switch (ruleType.toUpperCase()) {
+            case "ESSENTIAL":
+            case "NECESSIDADES":
+                return "Necessidades";
+            case "WANTS":
+            case "DESEJOS":
+                return "Desejos";
+            case "SAVINGS":
+            case "PRIORIDADES FINANCEIRAS":
+            case "PRIORIDADES_FINANCEIRAS":
+                return "Prioridades financeiras";
+            default:
+                return "Necessidades";
+        }
     }
 }

@@ -3,13 +3,17 @@ import { ChevronLeft, ChevronRight, Clock, Filter, Search, TrendingDown, Trendin
 import { transactionAPI } from '../services/api';
 import { useMes } from '../contexts/MesContext';
 
-export function TransactionList({ refreshTrigger }: { refreshTrigger?: number }) {
+export function TransactionList({ refreshTrigger, globalSearch = '' }: { refreshTrigger?: number; globalSearch?: string }) {
   const { mesAtivo, nextMonth, prevMonth } = useMes();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [search, setSearch] = useState(globalSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(globalSearch);
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+
+  useEffect(() => {
+    setSearch(globalSearch);
+  }, [globalSearch]);
   const searchTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
@@ -199,7 +203,7 @@ export function TransactionList({ refreshTrigger }: { refreshTrigger?: number })
                                 </span>
                               )}
                             </div>
-                            <div className="mt-1 flex items-center">
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
                               {tx.category && (
                                 <span
                                   className="rounded px-1.5 py-0.5 text-[10px] font-medium"
@@ -208,7 +212,17 @@ export function TransactionList({ refreshTrigger }: { refreshTrigger?: number })
                                   {tx.category.name}
                                 </span>
                               )}
-                              <span className="ml-2 text-[10px] text-slate-500">ID: #{tx.id}</span>
+                              {(tx.categoria || tx.parentCategory) && (
+                                <span className="rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                                  {tx.categoria || tx.parentCategory}
+                                </span>
+                              )}
+                              {tx.meioPagamento && (
+                                <span className="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
+                                  {tx.meioPagamento}
+                                </span>
+                              )}
+                              <span className="text-[10px] text-slate-500">ID: #{tx.id}</span>
                             </div>
                           </div>
                         </div>

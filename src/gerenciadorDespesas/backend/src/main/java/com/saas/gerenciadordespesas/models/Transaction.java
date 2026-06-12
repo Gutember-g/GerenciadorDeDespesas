@@ -23,6 +23,12 @@ public class Transaction {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @Column(name = "parent_category")
+    private String parentCategory;
+
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
     private Double amount;
     
     private LocalDate date;
@@ -68,4 +74,66 @@ public class Transaction {
     public void setTotalInstallments(Integer totalInstallments) { this.totalInstallments = totalInstallments; }
     public String getInstallmentGroupId() { return installmentGroupId; }
     public void setInstallmentGroupId(String installmentGroupId) { this.installmentGroupId = installmentGroupId; }
+
+    public String getParentCategory() { return parentCategory; }
+    public void setParentCategory(String parentCategory) { this.parentCategory = parentCategory; }
+
+    public String getSubcategoria() {
+        return this.category != null ? this.category.getName() : null;
+    }
+
+    public String getCategoria() {
+        if (this.parentCategory != null) {
+            return this.parentCategory;
+        }
+        if (this.category != null) {
+            return mapToPortugueseParentCategory(this.category.getBudgetRuleType());
+        }
+        return null;
+    }
+
+    public Double getValor() {
+        return this.amount;
+    }
+
+    public LocalDate getData() {
+        return this.date;
+    }
+
+    private String mapToPortugueseParentCategory(String ruleType) {
+        if (ruleType == null) return "Necessidades";
+        switch (ruleType.toUpperCase()) {
+            case "ESSENTIAL":
+            case "NECESSIDADES":
+                return "Necessidades";
+            case "WANTS":
+            case "DESEJOS":
+                return "Desejos";
+            case "SAVINGS":
+            case "PRIORIDADES FINANCEIRAS":
+            case "PRIORIDADES_FINANCEIRAS":
+                return "Prioridades financeiras";
+            default:
+                return "Necessidades";
+        }
+    }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public String getMeioPagamento() {
+        if (this.paymentMethod == null) return "Débito";
+        switch (this.paymentMethod.toUpperCase()) {
+            case "CREDITO":
+                return "Crédito";
+            case "DEBITO":
+                return "Débito";
+            case "PIX":
+                return "Pix";
+            case "DINHEIRO":
+                return "Espécie";
+            default:
+                return this.paymentMethod;
+        }
+    }
 }

@@ -1,8 +1,56 @@
 const API_URL = 'http://localhost:8080/api';
 
+export const authAPI = {
+    login: async (email: string, senha: string) => {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, senha }),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('E-mail ou senha inválidos');
+        }
+
+        return response.json();
+    },
+
+    logout: async () => {
+        const response = await fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao sair');
+        }
+
+        return response.text();
+    }
+};
+
 export const dashboardAPI = {
-    getSummary: async (userId: number) => {
-        const response = await fetch(`${API_URL}/dashboard/summary/${userId}`);
+    getSummary: async (month?: number, year?: number) => {
+        let url = `${API_URL}/summary`;
+        const params = new URLSearchParams();
+        if (month) params.append('month', month.toString());
+        if (year) params.append('year', year.toString());
+
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        const response = await fetch(url, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error('Erro ao carregar resumo do dashboard');
+        }
+        return response.json();
+    },
+    getLegacySummary: async (userId: number) => {
+        const response = await fetch(`${API_URL}/dashboard/summary/${userId}`, { credentials: 'include' });
         if (!response.ok) {
             throw new Error('Erro ao carregar resumo do dashboard');
         }
@@ -10,15 +58,68 @@ export const dashboardAPI = {
     }
 };
 
+export const accountAPI = {
+    getAccounts: async () => {
+        const response = await fetch(`${API_URL}/accounts`, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error('Erro ao carregar contas');
+        }
+        return response.json();
+    }
+};
+
+export const categoryAPI = {
+    getCategories: async () => {
+        const response = await fetch(`${API_URL}/categories`, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error('Erro ao carregar categorias');
+        }
+        return response.json();
+    },
+
+    createCategory: async (categoryData: { name: string; type: string; budgetRuleType: string; color: string }) => {
+        const response = await fetch(`${API_URL}/categories`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(categoryData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao criar subcategoria');
+        }
+        return response.json();
+    }
+};
+
 export const transactionAPI = {
     getTransactionsByUser: async (userId: number) => {
-        const response = await fetch(`${API_URL}/transactions/user/${userId}`);
+        const response = await fetch(`${API_URL}/transactions/user/${userId}`, { credentials: 'include' });
         if (!response.ok) {
             throw new Error('Erro ao carregar transações');
         }
         return response.json();
     },
-    
+
+    getTransactions: async (month?: number, year?: number, description?: string) => {
+        let url = `${API_URL}/transactions`;
+        const params = new URLSearchParams();
+        if (month) params.append('month', month.toString());
+        if (year) params.append('year', year.toString());
+        if (description) params.append('descricao', description);
+
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        const response = await fetch(url, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error('Erro ao carregar transações filtradas');
+        }
+        return response.json();
+    },
+
     createTransaction: async (transactionData: any) => {
         const response = await fetch(`${API_URL}/transactions`, {
             method: 'POST',
@@ -26,6 +127,7 @@ export const transactionAPI = {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(transactionData),
+            credentials: 'include'
         });
         if (!response.ok) {
             throw new Error('Erro ao criar transação');
