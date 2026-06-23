@@ -1,2 +1,9 @@
 /bin/
 /target/
+
+# Variáveis de ambiente
+.env
+*.env
+
+# Configurações locais
+application-local.properties
