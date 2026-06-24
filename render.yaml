@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: gerenciador-despesas-backend
+    env: docker
+    # Caminho do Dockerfile relativo à raiz do repositório
+    dockerfilePath: src/gerenciadorDespesas/backend/Dockerfile
+    # Diretório de contexto relativo à raiz do repositório
+    dockerContext: src/gerenciadorDespesas/backend
+    plan: free # Define que rodará no plano gratuito do Render
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DATABASE_URL
+        sync: false # Cole aqui a string de conexão do Neon no painel do Render
+      - key: FRONTEND_URL
+        sync: false # Cole aqui a URL do seu frontend na Vercel (ex: https://meu-app.vercel.app)
+      - key: JWT_SECRET
+        generateValue: true # Render vai gerar uma chave secreta de 256 bits segura automaticamente
+    healthCheckPath: /health
