@@ -12,7 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -36,6 +38,13 @@ public class AuthController {
 
     @Autowired
     private DefaultUserDataService defaultUserDataService;
+
+    @Value("${cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${cookie.samesite:Lax}")
+    private String cookieSameSite;
+
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
@@ -94,10 +103,10 @@ public class AuthController {
     public ResponseEntity<?> logout() {
         ResponseCookie cookie = ResponseCookie.from("jwt_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .build();
 
         return ResponseEntity.ok()
@@ -108,10 +117,10 @@ public class AuthController {
     private ResponseCookie createJwtCookie(String token) {
         return ResponseCookie.from("jwt_token", token)
                 .httpOnly(true)
-                .secure(false) // Set to true in production with HTTPS
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(Duration.ofHours(8))
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .build();
     }
 }
