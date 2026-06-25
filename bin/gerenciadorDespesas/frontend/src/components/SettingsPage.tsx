@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authAPI } from '../services/api';
 import { 
   User as UserIcon, 
   Settings as SettingsIcon, 
@@ -44,15 +45,20 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
   const [securitySuccess, setSecuritySuccess] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
 
-  const handleProfileSave = (e: React.FormEvent) => {
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateUser({
-      nome,
-      email,
-      avatarColor
-    });
-    setProfileSuccess(true);
-    setTimeout(() => setProfileSuccess(false), 3000);
+    try {
+      await authAPI.updateProfile(nome);
+      onUpdateUser({
+        nome,
+        email,
+        avatarColor
+      });
+      setProfileSuccess(true);
+      setTimeout(() => setProfileSuccess(false), 3000);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handlePrefSave = (e: React.FormEvent) => {

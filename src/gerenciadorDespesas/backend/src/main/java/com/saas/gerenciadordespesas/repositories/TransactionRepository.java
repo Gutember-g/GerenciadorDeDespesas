@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -14,9 +15,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByAccountId(Long accountId);
 
     @Query("SELECT t FROM Transaction t WHERE t.user.email = :email " +
-           "AND MONTH(t.date) = :month " +
-           "AND YEAR(t.date) = :year " +
-           "AND (:description IS NULL OR LOWER(t.description) LIKE LOWER(CONCAT('%', :description, '%'))) " +
+           "AND (:startDate IS NULL OR t.date >= :startDate) " +
+           "AND (:endDate IS NULL OR t.date <= :endDate) " +
+           "AND (:description IS NULL OR :description = '' OR LOWER(t.description) LIKE LOWER(CONCAT('%', :description, '%'))) " +
            "ORDER BY t.date DESC")
-    List<Transaction> findFiltered(@Param("email") String email, @Param("month") int month, @Param("year") int year, @Param("description") String description);
+    List<Transaction> findFiltered(
+            @Param("email") String email,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("description") String description);
 }

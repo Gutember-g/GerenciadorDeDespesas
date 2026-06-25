@@ -116,11 +116,23 @@ public class TransactionService {
 
     public List<Transaction> getFilteredTransactions(Integer month, Integer year, String description) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        LocalDate now = LocalDate.now();
-        int filterMonth = (month != null) ? month : now.getMonthValue();
-        int filterYear = (year != null) ? year : now.getYear();
-
-        return transactionRepository.findFiltered(email, filterMonth, filterYear, description);
+        
+        LocalDate startDate = null;
+        LocalDate endDate = null;
+        
+        if (month != null && year != null) {
+            startDate = LocalDate.of(year, month, 1);
+            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        } else if (month != null) {
+            int currentYear = LocalDate.now().getYear();
+            startDate = LocalDate.of(currentYear, month, 1);
+            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        } else if (year != null) {
+            startDate = LocalDate.of(year, 1, 1);
+            endDate = LocalDate.of(year, 12, 31);
+        }
+        
+        return transactionRepository.findFiltered(email, startDate, endDate, description);
     }
 
     private String getPortugueseParentCategory(String ruleType) {

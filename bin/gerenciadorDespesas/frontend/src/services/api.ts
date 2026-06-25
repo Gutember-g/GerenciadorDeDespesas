@@ -29,6 +29,23 @@ export const authAPI = {
         }
 
         return response.text();
+    },
+
+    updateProfile: async (nome: string) => {
+        const response = await fetch(`${API_URL}/auth/profile`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ nome }),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao atualizar perfil');
+        }
+
+        return response.json();
     }
 };
 

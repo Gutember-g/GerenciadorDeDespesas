@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
@@ -122,5 +123,26 @@ public class AuthController {
                 .maxAge(Duration.ofHours(8))
                 .sameSite(cookieSameSite)
                 .build();
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(email)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Não autorizado");
+        }
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        
+        String newName = request.get("nome");
+        if (newName != null && !newName.trim().isEmpty()) {
+            user.setName(newName);
+            userRepository.save(user);
+        }
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("nome", user.getName());
+        response.put("email", user.getEmail());
+        
+        return ResponseEntity.ok(response);
     }
 }

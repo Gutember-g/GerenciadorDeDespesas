@@ -12,9 +12,10 @@ import { EmergencyFund } from './dashboard/EmergencyFund';
 
 interface DashboardProps {
   refreshTrigger?: number;
+  userName?: string;
 }
 
-export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
+export const Dashboard = ({ refreshTrigger, userName }: DashboardProps) => {
   const { mesAtivo, nextMonth, prevMonth } = useMes();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -49,20 +50,20 @@ export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
-        <p className="text-slate-400">Carregando suas finanças...</p>
+        <p className="text-slate-500 dark:text-slate-400">Carregando suas finanças...</p>
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="flex h-[60vh] flex-col items-center justify-center rounded-xl border border-white/10 bg-white/5 p-8 text-center">
+      <div className="flex h-[60vh] flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 text-center shadow-sm">
         <AlertCircle className="mb-4 h-12 w-12 text-red-400" />
-        <h3 className="mb-2 text-xl font-bold text-slate-100">Ops! Algo deu errado</h3>
-        <p className="mb-6 text-slate-400">{error}</p>
+        <h3 className="mb-2 text-xl font-bold text-slate-800 dark:text-slate-100">Ops! Algo deu errado</h3>
+        <p className="mb-6 text-slate-500 dark:text-slate-400">{error}</p>
         <button
           onClick={fetchSummary}
-          className="rounded-xl bg-white/10 px-4 py-2 text-slate-200 transition-colors hover:bg-white/15"
+          className="rounded-xl bg-slate-100 dark:bg-white/10 px-4 py-2 text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-200 dark:hover:bg-white/15"
         >
           Tentar novamente
         </button>
@@ -80,25 +81,25 @@ export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
     <div className="space-y-5 animate-in fade-in duration-500">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Olá, João!</h2>
-          <p className="mt-2 text-sm text-slate-400">
+          <h2 className="text-3xl font-bold tracking-tight md:text-4xl text-slate-900 dark:text-white">Olá, {userName || 'Usuário'}!</h2>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             Aqui está o resumo das suas finanças em <span className="capitalize">{formatMonth()}</span>.
           </p>
         </div>
 
-        <div className="flex w-fit items-center rounded-xl border border-white/10 bg-white/5 p-1">
+        <div className="flex w-fit items-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-1 shadow-sm">
           <button
             onClick={prevMonth}
-            className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 dark:text-slate-400 transition hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <span className="min-w-[150px] px-4 text-center text-sm font-semibold capitalize">
+          <span className="min-w-[150px] px-4 text-center text-sm font-semibold capitalize text-slate-800 dark:text-slate-200">
             {formatMonth()}
           </span>
           <button
             onClick={nextMonth}
-            className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 dark:text-slate-400 transition hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -106,7 +107,7 @@ export const Dashboard = ({ refreshTrigger }: DashboardProps) => {
       </section>
 
       {loading && (
-        <div className="fixed right-8 top-24 z-50 rounded-full border border-white/10 bg-[#0d1828] p-3 shadow-xl">
+        <div className="fixed right-8 top-24 z-50 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828] p-3 shadow-xl">
           <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
         </div>
       )}

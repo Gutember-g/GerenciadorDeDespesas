@@ -7,21 +7,31 @@
 @layer base {
   * {
     box-sizing: border-box;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   }
 
   html {
-    background: #07111f;
+    background-color: #f8fafc;
+  }
+
+  html.dark {
+    background-color: #07111f;
   }
 
   body {
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
-    background: #07111f;
-    color: #f8fafc;
+    background-color: #f8fafc;
+    color: #0f172a;
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: geometricPrecision;
+  }
+
+  html.dark body {
+    background-color: #07111f;
+    color: #f8fafc;
   }
 
   button,
@@ -33,6 +43,6 @@
 
 @layer components {
   .glass-panel {
-    @apply rounded-xl border border-white/10 bg-[#0d1828]/80 shadow-2xl shadow-black/20 backdrop-blur-xl;
+    @apply rounded-xl border border-slate-200 bg-white/80 shadow-2xl shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#0d1828]/80 dark:shadow-black/20;
   }
 }

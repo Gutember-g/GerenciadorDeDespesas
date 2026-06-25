@@ -25,6 +25,30 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Cards state
+  const [cards, setCards] = useState<any[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState<string>('');
+
+  useEffect(() => {
+    if (isOpen) {
+      const storedCards = localStorage.getItem('financontrol_cards');
+      if (storedCards) {
+        const loadedCards = JSON.parse(storedCards);
+        setCards(loadedCards);
+        setSelectedCardId(loadedCards[0]?.id?.toString() || '');
+      } else {
+        const fallback = [
+          { id: 1, name: 'Nubank Ultravioleta', brand: 'Mastercard', limitAmount: 15000, currentInvoice: 2450.90, closingDay: 5, dueDay: 12, colorTheme: 'purple' },
+          { id: 2, name: 'XP Visa Infinite', brand: 'Visa', limitAmount: 30000, currentInvoice: 4890.30, closingDay: 10, dueDay: 17, colorTheme: 'gold' },
+          { id: 3, name: 'Banco Inter', brand: 'Mastercard', limitAmount: 10000, currentInvoice: 350.00, closingDay: 25, dueDay: 2, colorTheme: 'orange' }
+        ];
+        localStorage.setItem('financontrol_cards', JSON.stringify(fallback));
+        setCards(fallback);
+        setSelectedCardId(fallback[0]?.id?.toString() || '');
+      }
+    }
+  }, [isOpen]);
+
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
   const [showNewCategoryForm, setShowNewCategoryForm] = useState(false);
@@ -165,6 +189,16 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
       return;
     }
 
+    const actualPaymentMethod = installments > 1 ? 'CREDITO' : paymentMethod;
+
+    if (actualPaymentMethod === 'CREDITO') {
+      if (!selectedCardId) {
+        setError('Por favor, selecione um cartão de crédito.');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       await transactionAPI.createTransaction({
         descricao: description,
@@ -174,8 +208,23 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         tipo: type,
         contaId: parseInt(accountId, 10),
         categoriaId: parseInt(categoryId, 10),
-        meioPagamento: installments > 1 ? 'CREDITO' : paymentMethod,
+        meioPagamento: actualPaymentMethod,
       });
+
+      // Update card invoice in localStorage
+      if (actualPaymentMethod === 'CREDITO' && selectedCardId) {
+        const updatedCards = cards.map((c: any) => {
+          if (c.id.toString() === selectedCardId) {
+            return {
+              ...c,
+              currentInvoice: c.currentInvoice + numAmount
+            };
+          }
+          return c;
+        });
+        localStorage.setItem('financontrol_cards', JSON.stringify(updatedCards));
+      }
+
       onSuccess();
       onClose();
       setDescription('');
@@ -184,6 +233,8 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
       setDate(new Date().toISOString().split('T')[0]);
       setInstallments(1);
       setType('DEBITO');
+      setPaymentMethod('PIX');
+      setSelectedCardId('');
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar transação');
     } finally {
@@ -228,7 +279,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 className={`flex items-center justify-center gap-2 rounded-xl border p-3 transition-all ${type === 'DEBITO' ? 'border-red-500 bg-red-500/10 text-red-400' : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20'}`}
               >
                 <ArrowDownCircle className="h-5 w-5" />
-                <span className="font-medium">Débito</span>
+                <span className="font-medium">Saída</span>
               </button>
               <button
                 type="button"
@@ -236,7 +287,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                 className={`flex items-center justify-center gap-2 rounded-xl border p-3 transition-all ${type === 'CREDITO' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20'}`}
               >
                 <ArrowUpCircle className="h-5 w-5" />
-                <span className="font-medium">Crédito</span>
+                <span className="font-medium">Entrada</span>
               </button>
             </div>
 
@@ -351,6 +402,28 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
                     </button>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {(paymentMethod === 'CREDITO' || installments > 1) && (
+              <div className="space-y-2">
+                <label htmlFor="card" className="flex items-center text-sm font-medium text-slate-300">
+                  <CreditCard className="mr-2 h-4 w-4 text-slate-400" />
+                  Selecione o Cartão
+                </label>
+                <select
+                  id="card"
+                  value={selectedCardId}
+                  onChange={(e) => setSelectedCardId(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-white outline-none transition-colors focus:border-blue-500"
+                >
+                  <option value="">Selecione um cartão...</option>
+                  {cards.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.brand})
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 
