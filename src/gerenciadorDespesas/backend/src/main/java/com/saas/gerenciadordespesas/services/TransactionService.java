@@ -113,30 +113,32 @@ public class TransactionService {
     public List<Transaction> getTransactionsByUser(Long userId) {
         return transactionRepository.findByUserId(userId);
     }
+
     public List<Transaction> getFilteredTransactions(Integer month, Integer year, String description) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         
-        LocalDate startDate = null;
-        LocalDate endDate = null;
-        
+        LocalDate startDate;
+        LocalDate endDate;
+
         if (month != null && year != null) {
             startDate = LocalDate.of(year, month, 1);
-            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-        } else if (month != null) {
-            int currentYear = LocalDate.now().getYear();
-            startDate = LocalDate.of(currentYear, month, 1);
-            endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            endDate = startDate.plusMonths(1).minusDays(1);
         } else if (year != null) {
             startDate = LocalDate.of(year, 1, 1);
             endDate = LocalDate.of(year, 12, 31);
-        }
-        
-        if (description == null || description.trim().isEmpty()) {
-            return transactionRepository.findFiltered(email, startDate, endDate);
         } else {
+            startDate = LocalDate.of(1970, 1, 1);
+            endDate = LocalDate.of(2099, 12, 31);
+        }
+
+        if (description != null && !description.trim().isEmpty()) {
             return transactionRepository.findFilteredWithDescription(email, startDate, endDate, description);
+        } else {
+            return transactionRepository.findFiltered(email, startDate, endDate);
         }
     }
+
+
     private String getPortugueseParentCategory(String ruleType) {
         if (ruleType == null) return "Necessidades";
         switch (ruleType.toUpperCase()) {
