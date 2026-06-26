@@ -113,7 +113,6 @@ public class TransactionService {
     public List<Transaction> getTransactionsByUser(Long userId) {
         return transactionRepository.findByUserId(userId);
     }
-
     public List<Transaction> getFilteredTransactions(Integer month, Integer year, String description) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         
@@ -132,9 +131,12 @@ public class TransactionService {
             endDate = LocalDate.of(year, 12, 31);
         }
         
-        return transactionRepository.findFiltered(email, startDate, endDate, description);
+        if (description == null || description.trim().isEmpty()) {
+            return transactionRepository.findFiltered(email, startDate, endDate);
+        } else {
+            return transactionRepository.findFilteredWithDescription(email, startDate, endDate, description);
+        }
     }
-
     private String getPortugueseParentCategory(String ruleType) {
         if (ruleType == null) return "Necessidades";
         switch (ruleType.toUpperCase()) {

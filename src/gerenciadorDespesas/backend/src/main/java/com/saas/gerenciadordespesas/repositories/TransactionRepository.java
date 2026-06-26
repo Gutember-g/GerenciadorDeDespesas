@@ -17,9 +17,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT t FROM Transaction t WHERE t.user.email = :email " +
            "AND (:startDate IS NULL OR t.date >= :startDate) " +
            "AND (:endDate IS NULL OR t.date <= :endDate) " +
-           "AND (:description IS NULL OR :description = '' OR LOWER(t.description) LIKE LOWER(CONCAT('%', :description, '%'))) " +
            "ORDER BY t.date DESC")
     List<Transaction> findFiltered(
+            @Param("email") String email,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT t FROM Transaction t WHERE t.user.email = :email " +
+           "AND (:startDate IS NULL OR t.date >= :startDate) " +
+           "AND (:endDate IS NULL OR t.date <= :endDate) " +
+           "AND LOWER(t.description) LIKE LOWER(CONCAT('%', :description, '%')) " +
+           "ORDER BY t.date DESC")
+    List<Transaction> findFilteredWithDescription(
             @Param("email") String email,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
