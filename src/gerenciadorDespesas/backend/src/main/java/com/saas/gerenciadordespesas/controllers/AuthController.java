@@ -136,13 +136,71 @@ public class AuthController {
         String newName = request.get("nome");
         if (newName != null && !newName.trim().isEmpty()) {
             user.setName(newName);
-            userRepository.save(user);
         }
+
+        String newEmail = request.get("email");
+        boolean emailChanged = false;
+        if (newEmail != null && !newEmail.trim().isEmpty() && !newEmail.equalsIgnoreCase(user.getEmail())) {
+            if (userRepository.findByEmail(newEmail).isPresent()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("E-mail já cadastrado por outro usuário");
+            }
+            user.setEmail(newEmail);
+            emailChanged = true;
+        }
+        
+        userRepository.save(user);
         
         Map<String, String> response = new HashMap<>();
         response.put("nome", user.getName());
         response.put("email", user.getEmail());
         
+        if (emailChanged) {
+            String token = jwtUtil.generateToken(user.getEmail());
+            ResponseCookie cookie = createJwtCookie(token);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body(response);
+        }
+        
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(email)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Não autorizado");
+        }
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        
+        String currentPassword = request.get("senhaAtual");
+        String newPassword = request.get("novaSenha");
+
+        if (currentPassword == null || newPassword == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Senha atual e nova senha são obrigatórias");
+        }
+
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Senha atual incorreta");
+        }
+
+        if (newPassword.trim().length() < 8) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("A nova senha deve ter no mínimo 8 caracteres");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        ResponseCookie cookie = ResponseCookie.from("jwt_token", "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(0)
+                .sameSite(cookieSameSite)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body("Senha alterada com sucesso");
     }
 }

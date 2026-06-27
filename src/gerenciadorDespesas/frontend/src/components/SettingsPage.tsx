@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { authAPI } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 import { 
   User as UserIcon, 
   Settings as SettingsIcon, 
@@ -12,29 +12,29 @@ import {
   ShieldAlert
 } from 'lucide-react';
 
-interface UserProfile {
-  nome?: string;
-  email?: string;
-  avatarColor?: string;
-}
+export function SettingsPage() {
+  const { 
+    user, 
+    theme: globalTheme, 
+    currency: globalCurrency, 
+    notifications: globalNotifications, 
+    updateUserProfile, 
+    updateUserPreferences, 
+    changeUserPassword 
+  } = useAuthSettings();
 
-interface SettingsPageProps {
-  user: UserProfile;
-  onUpdateUser: (updated: UserProfile) => void;
-}
-
-export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
   // Profile state
-  const [nome, setNome] = useState(user.nome || 'Usuário Teste');
-  const [email, setEmail] = useState(user.email || 'usuario@teste.com');
-  const [avatarColor, setAvatarColor] = useState(user.avatarColor || 'from-amber-200 to-orange-500');
+  const [nome, setNome] = useState(user?.nome || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [avatarColor, setAvatarColor] = useState(user?.avatarColor || 'from-amber-200 to-orange-500');
   const [profileSuccess, setProfileSuccess] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Preference state
-  const [currency, setCurrency] = useState('BRL');
-  const [theme, setTheme] = useState('dark');
-  const [notifyEmail, setNotifyEmail] = useState(true);
-  const [notifyPush, setNotifyPush] = useState(false);
+  const [currency, setCurrency] = useState<'BRL' | 'USD' | 'EUR'>(globalCurrency);
+  const [theme, setTheme] = useState<'light' | 'dark'>(globalTheme);
+  const [notifyEmail, setNotifyEmail] = useState(globalNotifications.email);
+  const [notifyPush, setNotifyPush] = useState(globalNotifications.push);
   const [prefSuccess, setPrefSuccess] = useState(false);
 
   // Security state
@@ -45,31 +45,49 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
   const [securitySuccess, setSecuritySuccess] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
 
+  // Sync inputs with global state when user details load
+  useEffect(() => {
+    if (user) {
+      setNome(user.nome);
+      setEmail(user.email);
+      setAvatarColor(user.avatarColor);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    setCurrency(globalCurrency);
+    setTheme(globalTheme);
+    setNotifyEmail(globalNotifications.email);
+    setNotifyPush(globalNotifications.push);
+  }, [globalCurrency, globalTheme, globalNotifications]);
+
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setProfileError(null);
     try {
-      await authAPI.updateProfile(nome);
-      onUpdateUser({
-        nome,
-        email,
-        avatarColor
-      });
+      await updateUserProfile(nome, email, avatarColor);
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 3000);
     } catch (err) {
-      console.error(err);
+      setProfileError(err instanceof Error ? err.message : 'Erro ao atualizar perfil.');
     }
   };
 
   const handlePrefSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setPrefSuccess(true);
-    setTimeout(() => setPrefSuccess(false), 3000);
+    try {
+      updateUserPreferences(theme as any, currency as any, { email: notifyEmail, push: notifyPush });
+      setPrefSuccess(true);
+      setTimeout(() => setPrefSuccess(false), 3000);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleSecuritySave = (e: React.FormEvent) => {
+  const handleSecuritySave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSecurityError(null);
+    setSecuritySuccess(false);
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       setSecurityError('Todos os campos de senha são obrigatórios.');
@@ -81,16 +99,20 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setSecurityError('A nova senha deve ter pelo menos 6 caracteres.');
+    if (newPassword.length < 8) {
+      setSecurityError('A nova senha deve ter no mínimo 8 caracteres.');
       return;
     }
 
-    setSecuritySuccess(true);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setSecuritySuccess(false), 3000);
+    try {
+      await changeUserPassword(currentPassword, newPassword);
+      setSecuritySuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setSecurityError(err instanceof Error ? err.message : 'Erro ao alterar senha. Verifique se a senha atual está correta.');
+    }
   };
 
   const avatarColors = [
@@ -141,6 +163,13 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
               <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-600 dark:text-emerald-400">
                 <Check className="h-4 w-4" />
                 <span>Perfil atualizado com sucesso!</span>
+              </div>
+            )}
+
+            {profileError && (
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-650 dark:text-red-300">
+                <ShieldAlert className="h-4 w-4 shrink-0" />
+                <span>{profileError}</span>
               </div>
             )}
 
@@ -224,7 +253,7 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
                   </label>
                   <select
                     value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
+                    onChange={(e) => setCurrency(e.target.value as 'BRL' | 'USD' | 'EUR')}
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   >
                     <option value="BRL">Real Brasileiro (R$)</option>
@@ -237,7 +266,7 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tema da Interface</label>
                   <select
                     value={theme}
-                    onChange={(e) => setTheme(e.target.value)}
+                    onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   >
                     <option value="dark">Tema Escuro (Recomendado)</option>

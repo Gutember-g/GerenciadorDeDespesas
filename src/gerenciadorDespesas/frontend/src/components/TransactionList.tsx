@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock, Filter, Search, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { transactionAPI } from '../services/api';
 import { useMes } from '../contexts/MesContext';
+import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 
 export function TransactionList({ refreshTrigger, globalSearch = '' }: { refreshTrigger?: number; globalSearch?: string }) {
+  const { formatCurrency } = useAuthSettings();
   const { mesAtivo, nextMonth, prevMonth } = useMes();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +181,7 @@ export function TransactionList({ refreshTrigger, globalSearch = '' }: { refresh
                 <div className="flex items-center justify-between bg-slate-50 dark:bg-white/5 px-6 py-3 border-y border-slate-200 dark:border-white/5">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{date}</span>
                   <span className={`text-xs font-bold ${groupedTransactions[date].total >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
-                    {groupedTransactions[date].total >= 0 ? '+' : ''} R$ {groupedTransactions[date].total.toFixed(2)}
+                    {groupedTransactions[date].total >= 0 ? '+' : '-'} {formatCurrency(Math.abs(groupedTransactions[date].total))}
                   </span>
                 </div>
 
@@ -230,7 +232,7 @@ export function TransactionList({ refreshTrigger, globalSearch = '' }: { refresh
                         </div>
                         <div className="shrink-0 pl-4 text-right">
                           <p className={`text-sm font-bold ${isIncome ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                            {isIncome ? '+' : '-'} R$ {tx.amount.toFixed(2)}
+                            {isIncome ? '+' : '-'} {formatCurrency(tx.amount)}
                           </p>
                           <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">Liquidado</p>
                         </div>

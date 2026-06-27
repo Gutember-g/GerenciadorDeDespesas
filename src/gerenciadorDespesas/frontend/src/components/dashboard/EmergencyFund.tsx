@@ -1,4 +1,5 @@
 import { PiggyBank, Target, Hourglass } from 'lucide-react';
+import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
 
 interface EmergencyFundProps {
   meta: number;
@@ -9,10 +10,6 @@ interface EmergencyFundProps {
   prazoEstimado: number;
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
-
 export const EmergencyFund = ({
   meta,
   acumulado,
@@ -21,6 +18,7 @@ export const EmergencyFund = ({
   aporteMensal,
   prazoEstimado
 }: EmergencyFundProps) => {
+  const { formatCurrency } = useAuthSettings();
   return (
     <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20 space-y-6">
       <div className="flex items-center justify-between">

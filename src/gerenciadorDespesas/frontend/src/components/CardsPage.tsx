@@ -6,6 +6,7 @@ import {
   Trash2, 
   Calendar
 } from 'lucide-react';
+import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 
 interface CreditCard {
   id: number;
@@ -56,6 +57,7 @@ interface CardsPageProps {
 }
 
 export function CardsPage({ searchQuery }: CardsPageProps) {
+  const { formatCurrency } = useAuthSettings();
   const [cards, setCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -290,7 +292,7 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                     <div>
                       <p className="text-[9px] uppercase tracking-wider text-white/50">Fatura Atual</p>
                       <p className="text-lg font-extrabold text-white">
-                        R$ {card.currentInvoice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {formatCurrency(card.currentInvoice)}
                       </p>
                     </div>
 
@@ -307,13 +309,13 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                     <div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">Limite Disponível</p>
                       <p className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                        R$ {availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {formatCurrency(availableLimit)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-slate-500 dark:text-slate-400">Limite Total</p>
                       <p className="text-base font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
-                        R$ {card.limitAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {formatCurrency(card.limitAmount)}
                       </p>
                     </div>
                   </div>

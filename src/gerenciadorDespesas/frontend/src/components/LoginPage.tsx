@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { ChartNoAxesColumnIncreasing, Loader2, Lock, Mail } from 'lucide-react';
-import { authAPI } from '../services/api';
+import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 
-interface LoginPageProps {
-  onLogin: (user: { nome?: string; email?: string }) => void;
-}
-
-export function LoginPage({ onLogin }: LoginPageProps) {
-  const [email, setEmail] = useState('admin@gerenciasaas.com');
+export function LoginPage() {
+  const { login } = useAuthSettings();
+  const [email, setEmail] = useState(() => {
+    return localStorage.getItem('financontrol_last_login_email') || 'admin@gerenciasaas.com';
+  });
   const [senha, setSenha] = useState('admin123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +18,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setError(null);
 
     try {
-      const user = await authAPI.login(email, senha);
-      onLogin(user);
+      await login(email, senha);
+      // Salva o email do último login para pré-preencher no próximo
+      localStorage.setItem('financontrol_last_login_email', email);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível entrar.');
     } finally {

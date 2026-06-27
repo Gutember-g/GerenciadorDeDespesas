@@ -31,21 +31,40 @@ export const authAPI = {
         return response.text();
     },
 
-    updateProfile: async (nome: string) => {
+    updateProfile: async (nome: string, email: string) => {
         const response = await fetch(`${API_URL}/auth/profile`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ nome }),
+            body: JSON.stringify({ nome, email }),
             credentials: 'include',
         });
 
         if (!response.ok) {
-            throw new Error('Erro ao atualizar perfil');
+            const text = await response.text();
+            throw new Error(text || 'Erro ao atualizar perfil');
         }
 
         return response.json();
+    },
+
+    changePassword: async (senhaAtual: string, novaSenha: string) => {
+        const response = await fetch(`${API_URL}/auth/password`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ senhaAtual, novaSenha }),
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || 'Erro ao alterar senha');
+        }
+
+        return response.text();
     }
 };
 

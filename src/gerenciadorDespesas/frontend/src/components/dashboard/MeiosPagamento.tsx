@@ -1,4 +1,5 @@
 import { CreditCard, Wallet, Percent, Tags } from 'lucide-react';
+import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
 
 interface MeiosPagamentoProps {
   totalCredito: number;
@@ -7,16 +8,13 @@ interface MeiosPagamentoProps {
   categoriaMaisPesada: string;
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
-
 export const MeiosPagamento = ({
   totalCredito,
   totalDebitoPixEspecie,
   totalParcelados,
   categoriaMaisPesada
 }: MeiosPagamentoProps) => {
+  const { formatCurrency } = useAuthSettings();
   const total = totalCredito + totalDebitoPixEspecie;
   const pctCredito = total > 0 ? (totalCredito / total) * 100 : 0;
   const pctDebitoPix = total > 0 ? (totalDebitoPixEspecie / total) * 100 : 0;

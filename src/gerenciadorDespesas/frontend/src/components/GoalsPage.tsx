@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Award
 } from 'lucide-react';
+import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 
 interface Goal {
   id: number;
@@ -55,6 +56,7 @@ interface GoalsPageProps {
 }
 
 export function GoalsPage({ searchQuery }: GoalsPageProps) {
+  const { formatCurrency } = useAuthSettings();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -290,10 +292,10 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                     </div>
                     <div className="flex items-baseline justify-between">
                       <span className="text-xl font-extrabold text-blue-650 dark:text-blue-400">
-                        R$ {goal.currentAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {formatCurrency(goal.currentAmount)}
                       </span>
                       <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                        R$ {goal.targetAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {formatCurrency(goal.targetAmount)}
                       </span>
                     </div>
                   </div>

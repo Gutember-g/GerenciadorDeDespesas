@@ -1,4 +1,5 @@
 import { Layers, CalendarDays, Wallet } from 'lucide-react';
+import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
 
 interface InstallmentPurchase {
   name: string;
@@ -13,11 +14,8 @@ interface ComprasParceladasProps {
   compras: InstallmentPurchase[];
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
-
 export const ComprasParceladas = ({ compras }: ComprasParceladasProps) => {
+  const { formatCurrency } = useAuthSettings();
   // Calculate projections total
   const projectionTotals = [0, 0, 0];
   compras.forEach((c) => {

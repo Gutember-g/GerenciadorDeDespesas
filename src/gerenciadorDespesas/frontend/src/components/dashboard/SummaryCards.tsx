@@ -1,4 +1,5 @@
 import { ArrowDownRight, ArrowUpRight, PiggyBank, Wallet } from 'lucide-react';
+import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
 
 interface SummaryCardsProps {
   income: number;
@@ -6,10 +7,6 @@ interface SummaryCardsProps {
   faturaPrevistaCartao?: number;
   saldoReservaEmergencia?: number;
 }
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
 
 const Sparkline = ({ color }: { color: string }) => (
   <div className="mt-5 flex h-10 items-end gap-1 opacity-80">
@@ -27,6 +24,7 @@ const Sparkline = ({ color }: { color: string }) => (
 );
 
 export const SummaryCards = ({ income, expense, faturaPrevistaCartao = 0, saldoReservaEmergencia = 0 }: SummaryCardsProps) => {
+  const { formatCurrency } = useAuthSettings();
   const cards = [
     {
       label: 'Renda líquida do mês',

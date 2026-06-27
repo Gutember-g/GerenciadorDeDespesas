@@ -1,4 +1,5 @@
 import { Car, Plane, ShieldCheck } from 'lucide-react';
+import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
 
 interface RuleData {
   valorGasto: number;
@@ -12,11 +13,8 @@ interface Regra502030Props {
   reserva: RuleData;
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
-
 export const Regra502030 = ({ necessidades, desejos, reserva }: Regra502030Props) => {
+  const { formatCurrency } = useAuthSettings();
   const goals = [
     {
       label: 'Necessidades',
