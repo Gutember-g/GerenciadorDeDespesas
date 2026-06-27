@@ -48,6 +48,7 @@ function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [defaultCardIdForTransaction, setDefaultCardIdForTransaction] = useState<string | undefined>(undefined);
 
   // Global search & dropdown states
   const [searchInput, setSearchInput] = useState('');
@@ -304,10 +305,14 @@ function App() {
 
         <TransactionForm
           isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
+          onClose={() => {
+            setIsFormOpen(false);
+            setDefaultCardIdForTransaction(undefined);
+          }}
           onSuccess={() => {
             triggerRefresh();
           }}
+          defaultCardId={defaultCardIdForTransaction}
         />
 
         <div className="relative flex min-h-screen">
@@ -619,7 +624,13 @@ function App() {
               ) : activeTab === 'goals' ? (
                 <GoalsPage searchQuery={searchQuery} />
               ) : activeTab === 'cards' ? (
-                <CardsPage searchQuery={searchQuery} />
+                <CardsPage 
+                  searchQuery={searchQuery} 
+                  onAddTransactionClick={(cardId) => {
+                    setDefaultCardIdForTransaction(cardId.toString());
+                    setIsFormOpen(true);
+                  }}
+                />
               ) : (
                 <SettingsPage />
               )}

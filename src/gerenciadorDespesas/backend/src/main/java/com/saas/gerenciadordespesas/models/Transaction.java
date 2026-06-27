@@ -48,6 +48,9 @@ public class Transaction {
 
     private String status = "RECEIVED"; // RECEIVED or PENDING
 
+    @Column(name = "card_id")
+    private Long cardId;
+
     public Transaction() {
     }
 
@@ -141,4 +144,7 @@ public class Transaction {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Long getCardId() { return cardId; }
+    public void setCardId(Long cardId) { this.cardId = cardId; }
 }

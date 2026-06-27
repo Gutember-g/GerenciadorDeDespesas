@@ -12,6 +12,7 @@ public class TransactionRequestDTO {
     private Long categoriaId;
     private String meioPagamento;
     private String status;
+    private Long cardId;
 
     public TransactionRequestDTO() {
     }
@@ -86,5 +87,13 @@ public class TransactionRequestDTO {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getCardId() {
+        return cardId;
+    }
+
+    public void setCardId(Long cardId) {
+        this.cardId = cardId;
     }
 }

@@ -63,6 +63,7 @@ public class TransactionService {
         if (dto.getStatus() != null) {
             transaction.setStatus(dto.getStatus());
         }
+        transaction.setCardId("CREDITO".equals(transaction.getPaymentMethod()) ? dto.getCardId() : null);
 
         return createTransaction(transaction);
     }
@@ -100,6 +101,7 @@ public class TransactionService {
                 installment.setCurrentInstallment(i);
                 installment.setInstallmentGroupId(groupId);
                 installment.setStatus(transaction.getStatus());
+                installment.setCardId(transaction.getCardId());
 
                 transactionsToSave.add(installment);
             }
@@ -162,6 +164,7 @@ public class TransactionService {
                 daysDifference = java.time.temporal.ChronoUnit.DAYS.between(currentBaseDate, newBaseDate);
             }
 
+            Long newCardId = "CREDITO".equals(dto.getMeioPagamento()) ? dto.getCardId() : null;
             for (Transaction inst : futureInstallments) {
                 String newDesc = dto.getDescricao();
                 if (inst.getIsInstallment() && inst.getTotalInstallments() > 1) {
@@ -175,6 +178,7 @@ public class TransactionService {
                 inst.setAccount(account);
                 inst.setParentCategory(getPortugueseParentCategory(category.getBudgetRuleType()));
                 inst.setPaymentMethod(dto.getMeioPagamento() != null ? dto.getMeioPagamento() : "DEBITO");
+                inst.setCardId(newCardId);
                 inst.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
                 if (dto.getStatus() != null) {
                     inst.setStatus(dto.getStatus());
@@ -200,6 +204,7 @@ public class TransactionService {
             transaction.setAccount(account);
             transaction.setParentCategory(getPortugueseParentCategory(category.getBudgetRuleType()));
             transaction.setPaymentMethod(dto.getMeioPagamento() != null ? dto.getMeioPagamento() : "DEBITO");
+            transaction.setCardId("CREDITO".equals(transaction.getPaymentMethod()) ? dto.getCardId() : null);
             transaction.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
             if (dto.getStatus() != null) {
                 transaction.setStatus(dto.getStatus());

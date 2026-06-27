@@ -43,6 +43,10 @@ export function TransactionList({
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
 
+  // Cards select inside modal states
+  const [cards, setCards] = useState<any[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState('');
+
   // Delete states
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deletingTransaction, setDeletingTransaction] = useState<any | null>(null);
@@ -64,12 +68,18 @@ export function TransactionList({
     setEditAccountId(tx.account?.id?.toString() || '');
     setEditPaymentMethod(tx.paymentMethod || 'DEBITO');
     setEditStatus(tx.status || 'RECEIVED');
+    setSelectedCardId(tx.cardId?.toString() || '');
     setEditAllFuture(false);
     setShowCategoryDropdown(false);
     setCategorySearch('');
     setIsEditModalOpen(true);
 
     try {
+      const storedCards = localStorage.getItem('financontrol_cards');
+      if (storedCards) {
+        setCards(JSON.parse(storedCards));
+      }
+
       if (accounts.length === 0 || categories.length === 0) {
         const [accs, cats] = await Promise.all([
           accountAPI.getAccounts(),
@@ -151,7 +161,8 @@ export function TransactionList({
         contaId: parseInt(editAccountId, 10),
         categoriaId: parseInt(editCategoryId, 10),
         meioPagamento: editPaymentMethod,
-        status: editStatus
+        status: editStatus,
+        cardId: editPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null
       };
 
       await transactionAPI.updateTransaction(editingTransaction.id, dto, editAllFuture);
@@ -695,6 +706,28 @@ export function TransactionList({
                   ))}
                 </div>
               </div>
+
+              {/* Card selector */}
+              {(editPaymentMethod === 'CREDITO' || (editingTransaction && editingTransaction.totalInstallments > 1)) && (
+                <div className="space-y-1.5">
+                  <label className="flex items-center text-sm font-medium text-slate-650 dark:text-slate-300">
+                    <CreditCard className="mr-2 h-4 w-4 text-slate-400" />
+                    Selecione o Cartão
+                  </label>
+                  <select
+                    value={selectedCardId}
+                    onChange={(e) => setSelectedCardId(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-slate-800 dark:text-white outline-none focus:border-blue-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
+                  >
+                    <option value="">Selecione um cartão...</option>
+                    {cards.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.brand})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Category Select inside Edit Modal */}
               <div className="space-y-1.5 edit-category-select-container relative">

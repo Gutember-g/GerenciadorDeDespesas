@@ -6,9 +6,10 @@ interface TransactionFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  defaultCardId?: string;
 }
 
-export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormProps) {
+export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: TransactionFormProps) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [formattedAmount, setFormattedAmount] = useState('');
@@ -32,22 +33,28 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
   useEffect(() => {
     if (isOpen) {
       const storedCards = localStorage.getItem('financontrol_cards');
+      let loadedCards: any[] = [];
       if (storedCards) {
-        const loadedCards = JSON.parse(storedCards);
+        loadedCards = JSON.parse(storedCards);
         setCards(loadedCards);
-        setSelectedCardId(loadedCards[0]?.id?.toString() || '');
       } else {
-        const fallback = [
+        loadedCards = [
           { id: 1, name: 'Nubank Ultravioleta', brand: 'Mastercard', limitAmount: 15000, currentInvoice: 2450.90, closingDay: 5, dueDay: 12, colorTheme: 'purple' },
           { id: 2, name: 'XP Visa Infinite', brand: 'Visa', limitAmount: 30000, currentInvoice: 4890.30, closingDay: 10, dueDay: 17, colorTheme: 'gold' },
           { id: 3, name: 'Banco Inter', brand: 'Mastercard', limitAmount: 10000, currentInvoice: 350.00, closingDay: 25, dueDay: 2, colorTheme: 'orange' }
         ];
-        localStorage.setItem('financontrol_cards', JSON.stringify(fallback));
-        setCards(fallback);
-        setSelectedCardId(fallback[0]?.id?.toString() || '');
+        localStorage.setItem('financontrol_cards', JSON.stringify(loadedCards));
+        setCards(loadedCards);
+      }
+
+      if (defaultCardId) {
+        setSelectedCardId(defaultCardId);
+        setPaymentMethod('CREDITO');
+      } else {
+        setSelectedCardId(loadedCards[0]?.id?.toString() || '');
       }
     }
-  }, [isOpen]);
+  }, [isOpen, defaultCardId]);
 
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
@@ -209,6 +216,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess }: TransactionFormP
         contaId: parseInt(accountId, 10),
         categoriaId: parseInt(categoryId, 10),
         meioPagamento: actualPaymentMethod,
+        cardId: actualPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null,
       });
 
       // Update card invoice in localStorage
