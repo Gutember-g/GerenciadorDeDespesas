@@ -589,17 +589,17 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
         </div>
       )}
 
-      {/* DETALHES DO CARTÃO (DRAWER LATERAL) */}
+      {/* DETALHES DO CARTÃO (MODAL CENTRALIZADO) */}
       {selectedCardDetails && (
-        <>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Overlay */}
           <div 
-            className="fixed inset-0 bg-slate-950/45 backdrop-blur-sm z-40 transition-opacity duration-300 animate-in fade-in"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in"
             onClick={() => setSelectedCardDetails(null)}
           />
 
-          {/* Drawer Panel */}
-          <div className="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white dark:bg-[#081321]/95 border-l border-slate-200 dark:border-white/10 shadow-2xl z-50 transform transition-transform duration-300 overflow-y-auto translate-x-0 flex flex-col">
+          {/* Modal Panel */}
+          <div className="relative w-full max-w-xl rounded-2xl bg-white dark:bg-[#081321]/95 border border-slate-200 dark:border-white/10 shadow-2xl overflow-y-auto max-h-[90vh] flex flex-col z-10 animate-in zoom-in-95 duration-200">
             
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 dark:border-white/10 bg-white/95 dark:bg-[#081321]/95 p-6 backdrop-blur-xl">
@@ -607,12 +607,25 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Detalhes do Cartão</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Visão de limites e lançamentos</p>
               </div>
-              <button 
-                onClick={() => setSelectedCardDetails(null)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    onAddTransactionClick?.(selectedCardDetails.id);
+                    setSelectedCardDetails(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-450 transition animate-in fade-in duration-200"
+                  title="Lançar gasto neste cartão"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Lançar</span>
+                </button>
+                <button 
+                  onClick={() => setSelectedCardDetails(null)}
+                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Content Body */}
@@ -808,7 +821,10 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
                           Nenhum gasto registrado neste cartão para {formatMonthName(selectedMonth)}.
                         </p>
                         <button
-                          onClick={() => onAddTransactionClick?.(selectedCardDetails.id)}
+                          onClick={() => {
+                            onAddTransactionClick?.(selectedCardDetails.id);
+                            setSelectedCardDetails(null);
+                          }}
                           className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-blue-500/10 px-3 py-2 text-[10px] font-bold text-blue-600 dark:text-blue-450 transition hover:bg-blue-500/20"
                         >
                           <PlusCircle className="h-3.5 w-3.5" />
@@ -881,7 +897,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
 
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
