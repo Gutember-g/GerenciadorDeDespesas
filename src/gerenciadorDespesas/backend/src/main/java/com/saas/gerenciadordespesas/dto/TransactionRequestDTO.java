@@ -11,6 +11,7 @@ public class TransactionRequestDTO {
     private Long contaId;
     private Long categoriaId;
     private String meioPagamento;
+    private String status;
 
     public TransactionRequestDTO() {
     }
@@ -77,5 +78,13 @@ public class TransactionRequestDTO {
 
     public void setMeioPagamento(String meioPagamento) {
         this.meioPagamento = meioPagamento;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

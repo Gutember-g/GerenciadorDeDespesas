@@ -60,6 +60,9 @@ public class TransactionService {
         transaction.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
         transaction.setIsInstallment(dto.getNumeroParcelas() > 1);
         transaction.setTotalInstallments(dto.getNumeroParcelas());
+        if (dto.getStatus() != null) {
+            transaction.setStatus(dto.getStatus());
+        }
 
         return createTransaction(transaction);
     }
@@ -96,6 +99,7 @@ public class TransactionService {
                 installment.setTotalInstallments(transaction.getTotalInstallments());
                 installment.setCurrentInstallment(i);
                 installment.setInstallmentGroupId(groupId);
+                installment.setStatus(transaction.getStatus());
 
                 transactionsToSave.add(installment);
             }
@@ -135,6 +139,86 @@ public class TransactionService {
             return transactionRepository.findFilteredWithDescription(email, startDate, endDate, description);
         } else {
             return transactionRepository.findFiltered(email, startDate, endDate);
+        }
+    }
+
+    public Transaction updateTransactionFromDTO(Long id, TransactionRequestDTO dto, boolean editAllFuture) {
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        if (editAllFuture && transaction.getIsInstallment() && transaction.getInstallmentGroupId() != null) {
+            List<Transaction> futureInstallments = transactionRepository.findByInstallmentGroupIdAndCurrentInstallmentGreaterThanEqual(
+                    transaction.getInstallmentGroupId(), transaction.getCurrentInstallment());
+
+            Category category = categoryRepository.findById(dto.getCategoriaId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            Account account = accountRepository.findById(dto.getContaId())
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
+
+            LocalDate currentBaseDate = transaction.getDate();
+            LocalDate newBaseDate = dto.getDataPrimeiraParcela();
+            long daysDifference = 0;
+            if (newBaseDate != null && currentBaseDate != null) {
+                daysDifference = java.time.temporal.ChronoUnit.DAYS.between(currentBaseDate, newBaseDate);
+            }
+
+            for (Transaction inst : futureInstallments) {
+                String newDesc = dto.getDescricao();
+                if (inst.getIsInstallment() && inst.getTotalInstallments() > 1) {
+                    if (!newDesc.contains("(" + inst.getCurrentInstallment() + "/")) {
+                        newDesc = newDesc + " (" + inst.getCurrentInstallment() + "/" + inst.getTotalInstallments() + ")";
+                    }
+                }
+                inst.setDescription(newDesc);
+                inst.setAmount(dto.getValorTotal());
+                inst.setCategory(category);
+                inst.setAccount(account);
+                inst.setParentCategory(getPortugueseParentCategory(category.getBudgetRuleType()));
+                inst.setPaymentMethod(dto.getMeioPagamento() != null ? dto.getMeioPagamento() : "DEBITO");
+                inst.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
+                if (dto.getStatus() != null) {
+                    inst.setStatus(dto.getStatus());
+                }
+
+                if (daysDifference != 0 && inst.getDate() != null) {
+                    inst.setDate(inst.getDate().plusDays(daysDifference));
+                }
+            }
+
+            transactionRepository.saveAll(futureInstallments);
+            return transaction;
+        } else {
+            Category category = categoryRepository.findById(dto.getCategoriaId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            Account account = accountRepository.findById(dto.getContaId())
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
+
+            transaction.setDescription(dto.getDescricao());
+            transaction.setAmount(dto.getValorTotal());
+            transaction.setDate(dto.getDataPrimeiraParcela());
+            transaction.setCategory(category);
+            transaction.setAccount(account);
+            transaction.setParentCategory(getPortugueseParentCategory(category.getBudgetRuleType()));
+            transaction.setPaymentMethod(dto.getMeioPagamento() != null ? dto.getMeioPagamento() : "DEBITO");
+            transaction.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
+            if (dto.getStatus() != null) {
+                transaction.setStatus(dto.getStatus());
+            }
+
+            return transactionRepository.save(transaction);
+        }
+    }
+
+    public void deleteTransaction(Long id, boolean deleteAllFuture) {
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+        if (deleteAllFuture && transaction.getIsInstallment() && transaction.getInstallmentGroupId() != null) {
+            List<Transaction> futureInstallments = transactionRepository.findByInstallmentGroupIdAndCurrentInstallmentGreaterThanEqual(
+                    transaction.getInstallmentGroupId(), transaction.getCurrentInstallment());
+            transactionRepository.deleteAll(futureInstallments);
+        } else {
+            transactionRepository.delete(transaction);
         }
     }
 

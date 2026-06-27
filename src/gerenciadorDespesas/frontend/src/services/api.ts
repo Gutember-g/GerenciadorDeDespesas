@@ -169,5 +169,31 @@ export const transactionAPI = {
             throw new Error('Erro ao criar transação');
         }
         return response.json();
+    },
+
+    updateTransaction: async (id: number, transactionData: any, editAllFuture?: boolean) => {
+        const response = await fetch(`${API_URL}/transactions/${id}?editAllFuture=${!!editAllFuture}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(transactionData),
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao atualizar transação');
+        }
+        return response.json();
+    },
+
+    deleteTransaction: async (id: number, deleteAllFuture?: boolean) => {
+        const response = await fetch(`${API_URL}/transactions/${id}?deleteAllFuture=${!!deleteAllFuture}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao excluir transação');
+        }
+        return response;
     }
 };

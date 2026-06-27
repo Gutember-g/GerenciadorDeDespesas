@@ -611,7 +611,7 @@ function App() {
               {activeTab === 'dashboard' ? (
                 <Dashboard theme={theme} refreshTrigger={refreshTrigger} userName={user.nome} />
               ) : activeTab === 'transactions' ? (
-                <TransactionList refreshTrigger={refreshTrigger} globalSearch={searchQuery} />
+                <TransactionList refreshTrigger={refreshTrigger} globalSearch={searchQuery} onRefresh={triggerRefresh} />
               ) : activeTab === 'reports' ? (
                 <Reports refreshTrigger={refreshTrigger} />
               ) : activeTab === 'categories' ? (

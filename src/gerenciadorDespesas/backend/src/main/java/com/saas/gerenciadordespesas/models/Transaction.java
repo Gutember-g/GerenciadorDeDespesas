@@ -46,6 +46,8 @@ public class Transaction {
     // An identifier to group installments together
     private String installmentGroupId; 
 
+    private String status = "RECEIVED"; // RECEIVED or PENDING
+
     public Transaction() {
     }
 
@@ -136,4 +138,7 @@ public class Transaction {
                 return this.paymentMethod;
         }
     }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }
