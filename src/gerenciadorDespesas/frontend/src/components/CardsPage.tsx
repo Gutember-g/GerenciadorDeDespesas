@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   CreditCard as CardIcon, 
   Plus, 
@@ -11,13 +11,14 @@ import {
 } from 'lucide-react';
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 import { transactionAPI } from '../services/api';
+import { calcularFaturaPorCartao } from '../utils/cardInvoiceUtils';
 
 interface CreditCard {
   id: number;
   name: string;
   brand: 'Visa' | 'Mastercard' | 'Elo' | 'Amex';
   limitAmount: number;
-  currentInvoice: number;
+  currentInvoice?: number; // Deprecated — agora calculado automaticamente
   closingDay: number;
   dueDay: number;
   colorTheme: 'purple' | 'gold' | 'black' | 'orange' | 'blue';
@@ -29,7 +30,6 @@ const initialMockCards: CreditCard[] = [
     name: 'Nubank Ultravioleta',
     brand: 'Mastercard',
     limitAmount: 15000,
-    currentInvoice: 2450.90,
     closingDay: 5,
     dueDay: 12,
     colorTheme: 'purple'
@@ -39,7 +39,6 @@ const initialMockCards: CreditCard[] = [
     name: 'XP Visa Infinite',
     brand: 'Visa',
     limitAmount: 30000,
-    currentInvoice: 4890.30,
     closingDay: 10,
     dueDay: 17,
     colorTheme: 'gold'
@@ -49,7 +48,6 @@ const initialMockCards: CreditCard[] = [
     name: 'Banco Inter',
     brand: 'Mastercard',
     limitAmount: 10000,
-    currentInvoice: 350.00,
     closingDay: 25,
     dueDay: 2,
     colorTheme: 'orange'
@@ -112,7 +110,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
   const [formName, setFormName] = useState('');
   const [formBrand, setFormBrand] = useState<'Visa' | 'Mastercard' | 'Elo' | 'Amex'>('Visa');
   const [formLimitAmount, setFormLimitAmount] = useState('');
-  const [formCurrentInvoice, setFormCurrentInvoice] = useState('');
+  // formCurrentInvoice removido — fatura agora é calculada automaticamente
   const [formClosingDay, setFormClosingDay] = useState('');
   const [formDueDay, setFormDueDay] = useState('');
   const [formColorTheme, setFormColorTheme] = useState<'purple' | 'gold' | 'black' | 'orange' | 'blue'>('purple');
@@ -130,9 +128,39 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     setLoading(false);
   };
 
+  // State para transações globais de crédito (usadas no cálculo de fatura)
+  const [allCreditTransactions, setAllCreditTransactions] = useState<any[]>([]);
+
+  const fetchAllCreditTransactions = async () => {
+    try {
+      // Busca transações dos últimos 2 meses para cobrir qualquer período de fatura
+      const now = new Date();
+      const promises = [];
+      for (let i = 0; i < 3; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        promises.push(transactionAPI.getTransactions(d.getMonth() + 1, d.getFullYear()));
+      }
+      const results = await Promise.all(promises);
+      const allTx = results.flat();
+      // Remove duplicatas por id
+      const uniqueMap = new Map();
+      allTx.forEach((tx: any) => uniqueMap.set(tx.id, tx));
+      setAllCreditTransactions(Array.from(uniqueMap.values()));
+    } catch (err) {
+      console.error('Erro ao buscar transações para cálculo de fatura', err);
+    }
+  };
+
   useEffect(() => {
     loadCards();
+    fetchAllCreditTransactions();
   }, []);
+
+  // Cálculo reativo das faturas de todos os cartões
+  const faturasMap = useMemo(() => {
+    if (cards.length === 0) return new Map();
+    return calcularFaturaPorCartao(cards, allCreditTransactions);
+  }, [cards, allCreditTransactions]);
 
   const saveCardsList = (updatedCards: CreditCard[]) => {
     localStorage.setItem('financontrol_cards', JSON.stringify(updatedCards));
@@ -144,7 +172,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     setFormName('');
     setFormBrand('Visa');
     setFormLimitAmount('');
-    setFormCurrentInvoice('0');
+
     setFormClosingDay('5');
     setFormDueDay('12');
     setFormColorTheme('purple');
@@ -158,7 +186,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     setFormName(card.name);
     setFormBrand(card.brand);
     setFormLimitAmount(card.limitAmount.toString());
-    setFormCurrentInvoice(card.currentInvoice.toString());
+
     setFormClosingDay(card.closingDay.toString());
     setFormDueDay(card.dueDay.toString());
     setFormColorTheme(card.colorTheme);
@@ -180,7 +208,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     }
 
     const limitNum = parseFloat(formLimitAmount);
-    const invoiceNum = parseFloat(formCurrentInvoice || '0');
+
     const closingNum = parseInt(formClosingDay, 10);
     const dueNum = parseInt(formDueDay, 10);
 
@@ -188,10 +216,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
       setErrorMessage('O limite deve ser um número maior que zero.');
       return;
     }
-    if (isNaN(invoiceNum) || invoiceNum < 0) {
-      setErrorMessage('A fatura atual não pode ser negativa.');
-      return;
-    }
+
     if (isNaN(closingNum) || closingNum < 1 || closingNum > 31) {
       setErrorMessage('O dia de fechamento deve ser entre 1 e 31.');
       return;
@@ -207,7 +232,6 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
         name: formName,
         brand: formBrand,
         limitAmount: limitNum,
-        currentInvoice: invoiceNum,
         closingDay: closingNum,
         dueDay: dueNum,
         colorTheme: formColorTheme
@@ -221,7 +245,6 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
             name: formName,
             brand: formBrand,
             limitAmount: limitNum,
-            currentInvoice: invoiceNum,
             closingDay: closingNum,
             dueDay: dueNum,
             colorTheme: formColorTheme
@@ -299,8 +322,10 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredCards.map((card) => {
-            const availableLimit = card.limitAmount - card.currentInvoice;
-            const usePercent = Math.min((card.currentInvoice / card.limitAmount) * 100, 100);
+            const faturaInfo = faturasMap.get(card.id);
+            const faturaAtual = faturaInfo?.total ?? 0;
+            const availableLimit = card.limitAmount - faturaAtual;
+            const usePercent = Math.min((faturaAtual / card.limitAmount) * 100, 100);
 
             return (
               <div 
@@ -339,7 +364,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
                     <div>
                       <p className="text-[9px] uppercase tracking-wider text-white/50">Fatura Atual</p>
                       <p className="text-lg font-extrabold text-white">
-                        {formatCurrency(card.currentInvoice)}
+                        {formatCurrency(faturaAtual)}
                       </p>
                     </div>
 
@@ -496,19 +521,26 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Fatura Atual (R$)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formCurrentInvoice}
-                    onChange={(e) => setFormCurrentInvoice(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
-                  />
-                </div>
               </div>
+
+              {/* Bloco informativo de fatura calculada (somente na edição) */}
+              {modalMode === 'EDIT' && selectedCard && (() => {
+                const info = faturasMap.get(selectedCard.id);
+                const total = info?.total ?? 0;
+                const count = info?.count ?? 0;
+                const inicio = info?.inicioPeriodo;
+                const fim = info?.fimPeriodo;
+                const formatDate = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                return (
+                  <div className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-white/3 p-4 space-y-1">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fatura atual (calculada automaticamente)</p>
+                    <p className="text-xl font-extrabold text-slate-900 dark:text-white">{formatCurrency(total)}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Baseada em {count} transaç{count === 1 ? 'ão' : 'ões'}{inicio && fim ? ` de ${formatDate(inicio)} a ${formatDate(fim)}` : ''}
+                    </p>
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -656,7 +688,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
                     <div>
                       <p className="text-[8.5px] uppercase tracking-wider text-white/50">Fatura Atual</p>
                       <p className="text-base font-extrabold text-white">
-                        {formatCurrency(selectedCardDetails.currentInvoice)}
+                        {formatCurrency(faturasMap.get(selectedCardDetails.id)?.total ?? 0)}
                       </p>
                     </div>
                     <div className="text-right">
@@ -672,7 +704,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
                     <div>
                       <span className="text-slate-500 dark:text-slate-400 block">Limite Disponível</span>
                       <strong className="text-sm text-emerald-600 dark:text-emerald-450 mt-0.5 block">
-                        {formatCurrency(selectedCardDetails.limitAmount - selectedCardDetails.currentInvoice)}
+                        {formatCurrency(selectedCardDetails.limitAmount - (faturasMap.get(selectedCardDetails.id)?.total ?? 0))}
                       </strong>
                     </div>
                     <div className="text-right">
@@ -685,7 +717,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
 
                   {/* Progress bar */}
                   {(() => {
-                    const percent = Math.min((selectedCardDetails.currentInvoice / selectedCardDetails.limitAmount) * 100, 100);
+                    const percent = Math.min(((faturasMap.get(selectedCardDetails.id)?.total ?? 0) / selectedCardDetails.limitAmount) * 100, 100);
                     return (
                       <div className="space-y-1">
                         <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">

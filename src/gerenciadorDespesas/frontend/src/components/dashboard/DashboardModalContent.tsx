@@ -1,5 +1,6 @@
 import { AlertCircle } from 'lucide-react';
 import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
+import { calcularFaturaAtual } from '../../utils/cardInvoiceUtils';
 
 interface DashboardModalContentProps {
   type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | null;
@@ -296,7 +297,9 @@ export const DashboardModalContent = ({
             ) : (
               <div className="space-y-4">
                 {cardList.map((c: any) => {
-                  const limitUsedPct = Math.min((c.currentInvoice / c.limitAmount) * 100, 100);
+                  const faturaInfo = calcularFaturaAtual(c.id, transactions, c.closingDay);
+                  const cardFatura = faturaInfo.total;
+                  const limitUsedPct = Math.min((cardFatura / c.limitAmount) * 100, 100);
                   const cTx = transactions.filter(t => t.cardId === c.id).slice(0, 3);
                   
                   return (
@@ -307,14 +310,14 @@ export const DashboardModalContent = ({
                           <span className="text-[10px] uppercase font-extrabold opacity-60 px-1.5 py-0.5 rounded bg-slate-200 dark:bg-white/10">{c.brand}</span>
                         </div>
                         <span className="text-xs font-bold text-slate-800 dark:text-slate-255">
-                          {formatCurrency(c.currentInvoice)}
+                          {formatCurrency(cardFatura)}
                         </span>
                       </div>
 
                       {/* Limites */}
                       <div className="space-y-1">
                         <div className="flex justify-between text-[10px] text-slate-505 dark:text-slate-400">
-                          <span>Limite Disponível: {formatCurrency(c.limitAmount - c.currentInvoice)}</span>
+                          <span>Limite Disponível: {formatCurrency(c.limitAmount - cardFatura)}</span>
                           <span>Total: {formatCurrency(c.limitAmount)}</span>
                         </div>
                         <div className="h-1.5 w-full bg-slate-200/80 dark:bg-slate-800 rounded-full overflow-hidden">

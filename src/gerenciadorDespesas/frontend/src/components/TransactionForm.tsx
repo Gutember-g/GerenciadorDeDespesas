@@ -39,9 +39,9 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
         setCards(loadedCards);
       } else {
         loadedCards = [
-          { id: 1, name: 'Nubank Ultravioleta', brand: 'Mastercard', limitAmount: 15000, currentInvoice: 2450.90, closingDay: 5, dueDay: 12, colorTheme: 'purple' },
-          { id: 2, name: 'XP Visa Infinite', brand: 'Visa', limitAmount: 30000, currentInvoice: 4890.30, closingDay: 10, dueDay: 17, colorTheme: 'gold' },
-          { id: 3, name: 'Banco Inter', brand: 'Mastercard', limitAmount: 10000, currentInvoice: 350.00, closingDay: 25, dueDay: 2, colorTheme: 'orange' }
+          { id: 1, name: 'Nubank Ultravioleta', brand: 'Mastercard', limitAmount: 15000, closingDay: 5, dueDay: 12, colorTheme: 'purple' },
+          { id: 2, name: 'XP Visa Infinite', brand: 'Visa', limitAmount: 30000, closingDay: 10, dueDay: 17, colorTheme: 'gold' },
+          { id: 3, name: 'Banco Inter', brand: 'Mastercard', limitAmount: 10000, closingDay: 25, dueDay: 2, colorTheme: 'orange' }
         ];
         localStorage.setItem('financontrol_cards', JSON.stringify(loadedCards));
         setCards(loadedCards);
@@ -218,20 +218,6 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
         meioPagamento: actualPaymentMethod,
         cardId: actualPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null,
       });
-
-      // Update card invoice in localStorage
-      if (actualPaymentMethod === 'CREDITO' && selectedCardId) {
-        const updatedCards = cards.map((c: any) => {
-          if (c.id.toString() === selectedCardId) {
-            return {
-              ...c,
-              currentInvoice: c.currentInvoice + numAmount
-            };
-          }
-          return c;
-        });
-        localStorage.setItem('financontrol_cards', JSON.stringify(updatedCards));
-      }
 
       onSuccess();
       onClose();
