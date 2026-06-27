@@ -614,7 +614,12 @@ function App() {
 
             <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 lg:px-10">
               {activeTab === 'dashboard' ? (
-                <Dashboard theme={theme} refreshTrigger={refreshTrigger} userName={user.nome} />
+                <Dashboard 
+                  theme={theme} 
+                  refreshTrigger={refreshTrigger} 
+                  userName={user.nome} 
+                  onNavigate={(tab) => setActiveTab(tab)}
+                />
               ) : activeTab === 'transactions' ? (
                 <TransactionList refreshTrigger={refreshTrigger} globalSearch={searchQuery} onRefresh={triggerRefresh} />
               ) : activeTab === 'reports' ? (

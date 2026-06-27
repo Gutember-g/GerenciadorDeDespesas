@@ -6,6 +6,7 @@ interface SummaryCardsProps {
   expense: number;
   faturaPrevistaCartao?: number;
   saldoReservaEmergencia?: number;
+  onCardClick?: (type: 'renda' | 'gastos' | 'fatura' | 'reserva') => void;
 }
 
 const Sparkline = ({ color }: { color: string }) => (
@@ -23,7 +24,7 @@ const Sparkline = ({ color }: { color: string }) => (
   </div>
 );
 
-export const SummaryCards = ({ income, expense, faturaPrevistaCartao = 0, saldoReservaEmergencia = 0 }: SummaryCardsProps) => {
+export const SummaryCards = ({ income, expense, faturaPrevistaCartao = 0, saldoReservaEmergencia = 0, onCardClick }: SummaryCardsProps) => {
   const { formatCurrency } = useAuthSettings();
   const cards = [
     {
@@ -72,7 +73,22 @@ export const SummaryCards = ({ income, expense, faturaPrevistaCartao = 0, saldoR
         return (
           <article
             key={card.label}
-            className={`relative overflow-hidden rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/50 bg-gradient-to-br ${card.tone} p-5 shadow-2xl shadow-slate-100/50 dark:shadow-black/20`}
+            onClick={() => {
+              const typeMap: Record<string, 'renda' | 'gastos' | 'fatura' | 'reserva'> = {
+                'Renda líquida do mês': 'renda',
+                'Gastos totais': 'gastos',
+                'Fatura prevista do cartão': 'fatura',
+                'Reserva de emergência': 'reserva'
+              };
+              onCardClick?.(typeMap[card.label]);
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = card.accent;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '';
+            }}
+            className={`relative overflow-hidden rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/50 bg-gradient-to-br ${card.tone} p-5 shadow-2xl shadow-slate-100/50 dark:shadow-black/20 cursor-pointer transition-all hover:scale-[1.01]`}
           >
             <div
               className="absolute -right-8 -top-10 h-28 w-28 rounded-full blur-3xl"

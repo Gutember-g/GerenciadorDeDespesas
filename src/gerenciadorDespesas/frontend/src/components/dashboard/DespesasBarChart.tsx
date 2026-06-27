@@ -30,14 +30,25 @@ interface DespesasBarChartProps {
   desejos: { valorGasto: number; percentualMeta: number };
   reserva: { valorGasto: number; percentualMeta: number };
   theme?: 'light' | 'dark';
+  onChartClick?: () => void;
 }
 
-export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva, theme = 'dark' }: DespesasBarChartProps) => {
+export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva, theme = 'dark', onChartClick }: DespesasBarChartProps) => {
   const isDark = theme === 'dark';
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    onClick: (_event: any, elements: any) => {
+      if (elements && elements.length > 0) {
+        onChartClick?.();
+      }
+    },
+    onHover: (_event: any, chartElement: any) => {
+      if (_event && _event.native && _event.native.target) {
+        _event.native.target.style.cursor = chartElement.length ? 'pointer' : 'default';
+      }
+    },
     plugins: {
       legend: {
         display: false,
@@ -125,7 +136,10 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20">
+    <div 
+      onClick={() => onChartClick?.()}
+      className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20 cursor-pointer transition-all hover:scale-[1.005] hover:border-blue-500 dark:hover:border-blue-500"
+    >
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Comparativo de gastos</h3>
         <span className="rounded-lg bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">

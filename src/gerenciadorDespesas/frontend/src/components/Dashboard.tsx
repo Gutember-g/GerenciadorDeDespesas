@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { dashboardAPI } from '../services/api';
+import { dashboardAPI, transactionAPI } from '../services/api';
 import { useMes } from '../contexts/MesContext';
 import { SummaryCards } from './dashboard/SummaryCards';
 import { Regra502030 } from './dashboard/Regra502030';
@@ -9,18 +9,54 @@ import { TopCategorias } from './dashboard/TopCategorias';
 import { MeiosPagamento } from './dashboard/MeiosPagamento';
 import { ComprasParceladas } from './dashboard/ComprasParceladas';
 import { EmergencyFund } from './dashboard/EmergencyFund';
+import { DashboardModal } from './DashboardModal';
+import { DashboardModalContent } from './dashboard/DashboardModalContent';
 
 interface DashboardProps {
   refreshTrigger?: number;
   userName?: string;
   theme?: 'light' | 'dark';
+  onNavigate?: (tab: 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings') => void;
 }
 
-export const Dashboard = ({ refreshTrigger, userName, theme = 'dark' }: DashboardProps) => {
+export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate }: DashboardProps) => {
   const { mesAtivo, nextMonth, prevMonth } = useMes();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Dashboard Detail Modal States
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | null;
+    payload: any;
+  }>({
+    isOpen: false,
+    type: null,
+    payload: null
+  });
+  const [modalTransactions, setModalTransactions] = useState<any[]>([]);
+  const [loadingModalData, setLoadingModalData] = useState(false);
+
+  const fetchModalTransactions = async (monthNum: number, yearNum: number) => {
+    try {
+      setLoadingModalData(true);
+      const list = await transactionAPI.getTransactions(monthNum, yearNum);
+      setModalTransactions(list);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingModalData(false);
+    }
+  };
+
+  useEffect(() => {
+    if (modalState.isOpen) {
+      fetchModalTransactions(mesAtivo.month, mesAtivo.year);
+    } else {
+      setModalTransactions([]);
+    }
+  }, [modalState.isOpen, mesAtivo]);
 
   const fetchSummary = async () => {
     try {
@@ -118,6 +154,7 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark' }: Dashboar
         expense={data.totalDespesas}
         faturaPrevistaCartao={data.faturaPrevistaCartao}
         saldoReservaEmergencia={data.saldoReservaEmergencia}
+        onCardClick={(type) => setModalState({ isOpen: true, type, payload: null })}
       />
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.5fr_1fr]">
@@ -127,8 +164,14 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark' }: Dashboar
           necessidades={data.necessidades}
           desejos={data.desejos}
           reserva={data.reserva}
+          onChartClick={() => setModalState({ isOpen: true, type: 'grafico-mes', payload: null })}
         />
-        <TopCategorias theme={theme} categorias={allCategories} total={data.totalDespesas} />
+        <TopCategorias 
+          theme={theme} 
+          categorias={allCategories} 
+          total={data.totalDespesas} 
+          onCategoryClick={(catName) => setModalState({ isOpen: true, type: 'categoria', payload: { name: catName } })}
+        />
       </section>
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">
@@ -150,8 +193,39 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark' }: Dashboar
           percentual={data.emergencyPercentual}
           aporteMensal={data.emergencyAporteMensal}
           prazoEstimado={data.emergencyPrazoEstimado}
+          onClick={() => setModalState({ isOpen: true, type: 'reserva', payload: null })}
         />
       </section>
+
+      {/* DASHBOARD DETAILS MODAL */}
+      <DashboardModal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ isOpen: false, type: null, payload: null })}
+        title={
+          modalState.type === 'renda' ? `Renda líquida — ${formatMonth()}` :
+          modalState.type === 'gastos' ? `Gastos totais — ${formatMonth()}` :
+          modalState.type === 'fatura' ? `Fatura prevista — ${formatMonth()}` :
+          modalState.type === 'reserva' ? 'Reserva de emergência' :
+          modalState.type === 'grafico-mes' ? `Gastos em ${formatMonth()}` :
+          modalState.type === 'categoria' ? `${modalState.payload?.name || 'Categoria'} — ${formatMonth()}` :
+          'Detalhes'
+        }
+      >
+        {loadingModalData ? (
+          <div className="flex h-32 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          </div>
+        ) : (
+          <DashboardModalContent
+            type={modalState.type}
+            payload={modalState.payload}
+            dashboardData={data}
+            transactions={modalTransactions}
+            onNavigate={onNavigate}
+            onClose={() => setModalState({ isOpen: false, type: null, payload: null })}
+          />
+        )}
+      </DashboardModal>
     </div>
   );
 };

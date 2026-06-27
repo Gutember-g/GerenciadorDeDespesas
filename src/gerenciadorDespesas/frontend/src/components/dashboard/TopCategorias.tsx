@@ -7,11 +7,12 @@ interface TopCategoriasProps {
   categorias: CategoryItem[];
   total?: number;
   theme?: 'light' | 'dark';
+  onCategoryClick?: (categoryName: string) => void;
 }
 
 const colors = ['#ff3d57', '#4f67ff', '#8b5cf6', '#22c55e', '#facc15', '#06b6d4'];
 
-export const TopCategorias = ({ categorias, total = 0, theme = 'dark' }: TopCategoriasProps) => {
+export const TopCategorias = ({ categorias, total = 0, theme = 'dark', onCategoryClick }: TopCategoriasProps) => {
   const top6 = categorias.slice(0, 6);
   const totalCategorias = total || top6.reduce((sum, cat) => sum + cat.valor, 0);
 
@@ -32,7 +33,7 @@ export const TopCategorias = ({ categorias, total = 0, theme = 'dark' }: TopCate
     : `conic-gradient(${theme === 'dark' ? '#1e293b' : '#e2e8f0'} 0% 100%)`;
 
   return (
-    <div className="h-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20">
+    <div className="h-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20 transition-all hover:scale-[1.005] hover:border-blue-500 dark:hover:border-blue-500">
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Gastos por categoria</h3>
         <button className="text-xs font-medium text-slate-500 dark:text-slate-400 transition hover:text-slate-900 dark:hover:text-white">Ver todas</button>
@@ -40,13 +41,21 @@ export const TopCategorias = ({ categorias, total = 0, theme = 'dark' }: TopCate
 
       {top6.length > 0 ? (
         <div className="grid items-center gap-6 sm:grid-cols-[170px_1fr]">
-          <div className="relative mx-auto h-40 w-40 rounded-full" style={{ background: gradient }}>
+          <div 
+            onClick={() => onCategoryClick?.(top6[0]?.nome || 'Geral')}
+            className="relative mx-auto h-40 w-40 rounded-full cursor-pointer hover:scale-[1.02] transition" 
+            style={{ background: gradient }}
+          >
             <div className="absolute inset-10 rounded-full bg-white dark:bg-[#0d1828]" />
           </div>
 
           <div className="space-y-3">
             {top6.map((cat, index) => (
-              <div key={`${cat.nome}-${index}`} className="flex items-center justify-between gap-3 text-sm">
+              <div 
+                key={`${cat.nome}-${index}`} 
+                onClick={() => onCategoryClick?.(cat.nome)}
+                className="flex items-center justify-between gap-3 text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 p-1 rounded-md transition"
+              >
                 <div className="flex min-w-0 items-center gap-2">
                   <span
                     className="h-3 w-3 shrink-0 rounded-full"

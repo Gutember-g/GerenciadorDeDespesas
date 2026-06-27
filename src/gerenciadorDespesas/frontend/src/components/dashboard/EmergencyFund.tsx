@@ -8,6 +8,7 @@ interface EmergencyFundProps {
   percentual: number;
   aporteMensal: number;
   prazoEstimado: number;
+  onClick?: () => void;
 }
 
 export const EmergencyFund = ({
@@ -16,11 +17,15 @@ export const EmergencyFund = ({
   falta,
   percentual,
   aporteMensal,
-  prazoEstimado
+  prazoEstimado,
+  onClick
 }: EmergencyFundProps) => {
   const { formatCurrency } = useAuthSettings();
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20 space-y-6">
+    <div 
+      onClick={onClick}
+      className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20 space-y-6 cursor-pointer transition-all hover:scale-[1.005] hover:border-blue-500 dark:hover:border-blue-500"
+    >
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
           <PiggyBank className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
