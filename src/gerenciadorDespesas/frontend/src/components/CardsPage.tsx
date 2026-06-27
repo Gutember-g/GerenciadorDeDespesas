@@ -532,11 +532,11 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
                 const fim = info?.fimPeriodo;
                 const formatDate = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 return (
-                  <div className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-white/3 p-4 space-y-1">
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fatura atual (calculada automaticamente)</p>
-                    <p className="text-xl font-extrabold text-slate-900 dark:text-white">{formatCurrency(total)}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Baseada em {count} transaç{count === 1 ? 'ão' : 'ões'}{inicio && fim ? ` de ${formatDate(inicio)} a ${formatDate(fim)}` : ''}
+                  <div className="rounded-xl border border-slate-250 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4 space-y-1.5 cursor-default">
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-450 uppercase tracking-wider">Fatura atual (calculada automaticamente)</p>
+                    <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">{formatCurrency(total)}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      Baseada em <strong className="font-semibold text-slate-700 dark:text-slate-300">{count}</strong> transaç{count === 1 ? 'ão' : 'ões'}{inicio && fim ? ` de ${formatDate(inicio)} a ${formatDate(fim)}` : ''}
                     </p>
                   </div>
                 );
