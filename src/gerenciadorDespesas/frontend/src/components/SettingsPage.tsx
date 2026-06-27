@@ -104,8 +104,8 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
   return (
     <div className="space-y-8 max-w-4xl animate-in fade-in duration-300">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Configurações</h2>
-        <p className="mt-1 text-sm text-slate-400">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Configurações</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Gerencie suas informações de perfil, preferências de exibição e segurança da sua conta.
         </p>
       </div>
@@ -113,16 +113,16 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         {/* Left Side menu guide */}
         <div className="space-y-2">
-          <a href="#perfil" className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-            <UserIcon className="h-4 w-4 text-blue-400" />
+          <a href="#perfil" className="flex items-center gap-3 rounded-xl bg-slate-100 dark:bg-white/5 px-4 py-3 text-sm font-semibold text-slate-800 dark:text-white transition hover:bg-slate-200 dark:hover:bg-white/10">
+            <UserIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <span>Dados do Perfil</span>
           </a>
-          <a href="#preferencias" className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-400 transition hover:bg-white/5 hover:text-white">
-            <SettingsIcon className="h-4 w-4 text-indigo-400" />
+          <a href="#preferencias" className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-500 dark:text-slate-400 transition hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white">
+            <SettingsIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
             <span>Preferências</span>
           </a>
-          <a href="#seguranca" className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-400 transition hover:bg-white/5 hover:text-white">
-            <Lock className="h-4 w-4 text-emerald-400" />
+          <a href="#seguranca" className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-500 dark:text-slate-400 transition hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white">
+            <Lock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>Segurança da Conta</span>
           </a>
         </div>
@@ -131,14 +131,14 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
         <div className="md:col-span-2 space-y-8">
           
           {/* PROFILE SECTION */}
-          <section id="perfil" className="rounded-2xl border border-white/10 bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <UserIcon className="h-5 w-5 text-blue-400" />
+          <section id="perfil" className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <UserIcon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
               <span>Dados de Perfil</span>
             </h3>
 
             {profileSuccess && (
-              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-400">
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-600 dark:text-emerald-400">
                 <Check className="h-4 w-4" />
                 <span>Perfil atualizado com sucesso!</span>
               </div>
@@ -150,7 +150,7 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
                   {(nome || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Estilo do Avatar</label>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estilo do Avatar</label>
                   <div className="flex flex-wrap gap-2">
                     {avatarColors.map((color) => (
                       <button
@@ -158,7 +158,7 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
                         type="button"
                         onClick={() => setAvatarColor(color.value)}
                         className={`h-7 w-7 rounded-lg bg-gradient-to-br ${color.value} border-2 transition ${
-                          avatarColor === color.value ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105'
+                          avatarColor === color.value ? 'border-slate-800 dark:border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105'
                         }`}
                         title={color.name}
                       />
@@ -169,23 +169,23 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Nome Completo</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome Completo</label>
                   <input
                     required
                     type="text"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">E-mail</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">E-mail</label>
                   <input
                     required
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -202,14 +202,14 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
           </section>
 
           {/* PREFERENCES SECTION */}
-          <section id="preferencias" className="rounded-2xl border border-white/10 bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <SettingsIcon className="h-5 w-5 text-indigo-400" />
+          <section id="preferencias" className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <SettingsIcon className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
               <span>Preferências</span>
             </h3>
 
             {prefSuccess && (
-              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-400">
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-600 dark:text-emerald-400">
                 <Check className="h-4 w-4" />
                 <span>Preferências salvas com sucesso!</span>
               </div>
@@ -218,14 +218,14 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
             <form onSubmit={handlePrefSave} className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1.5">
-                    <Globe className="h-4 w-4 text-slate-400" />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                    <Globe className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                     <span>Moeda Padrão</span>
                   </label>
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   >
                     <option value="BRL">Real Brasileiro (R$)</option>
                     <option value="USD">Dólar Americano ($)</option>
@@ -234,11 +234,11 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Tema da Interface</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tema da Interface</label>
                   <select
                     value={theme}
                     onChange={(e) => setTheme(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   >
                     <option value="dark">Tema Escuro (Recomendado)</option>
                     <option value="light">Tema Claro</option>
@@ -248,8 +248,8 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
 
               {/* Notification preferences */}
               <div className="space-y-3 pt-2">
-                <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Bell className="h-4 w-4 text-slate-400" />
+                <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-300 flex items-center gap-1.5">
+                  <Bell className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                   <span>Notificações por canal</span>
                 </h4>
                 <div className="space-y-2">
@@ -258,18 +258,18 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
                       type="checkbox"
                       checked={notifyEmail}
                       onChange={(e) => setNotifyEmail(e.target.checked)}
-                      className="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500 accent-blue-500 w-4 h-4"
+                      className="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-500 focus:ring-blue-500 accent-blue-500 w-4 h-4"
                     />
-                    <span className="text-sm text-slate-300">Receber alertas de vencimento por e-mail</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Receber alertas de vencimento por e-mail</span>
                   </label>
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={notifyPush}
                       onChange={(e) => setNotifyPush(e.target.checked)}
-                      className="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500 accent-blue-500 w-4 h-4"
+                      className="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-500 focus:ring-blue-500 accent-blue-500 w-4 h-4"
                     />
-                    <span className="text-sm text-slate-300">Ativar notificações do navegador (Push)</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Ativar notificações do navegador (Push)</span>
                   </label>
                 </div>
               </div>
@@ -286,21 +286,21 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
           </section>
 
           {/* SECURITY SECTION */}
-          <section id="seguranca" className="rounded-2xl border border-white/10 bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Lock className="h-5 w-5 text-emerald-400" />
+          <section id="seguranca" className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Lock className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
               <span>Segurança da Conta</span>
             </h3>
 
             {securitySuccess && (
-              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-400">
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-600 dark:text-emerald-400">
                 <Check className="h-4 w-4" />
                 <span>Senha alterada com sucesso!</span>
               </div>
             )}
 
             {securityError && (
-              <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-300">
+              <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-650 dark:text-red-300">
                 <ShieldAlert className="h-4 w-4 shrink-0" />
                 <span>{securityError}</span>
               </div>
@@ -308,19 +308,19 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
 
             <form onSubmit={handleSecuritySave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Senha Atual</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Senha Atual</label>
                 <div className="relative">
                   <input
                     required
                     type={showPass ? 'text' : 'password'}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 pr-10 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 pr-10 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPass(!showPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-800 dark:hover:text-white"
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -329,23 +329,23 @@ export function SettingsPage({ user, onUpdateUser }: SettingsPageProps) {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Nova Senha</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nova Senha</label>
                   <input
                     required
                     type={showPass ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Confirmar Nova Senha</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirmar Nova Senha</label>
                   <input
                     required
                     type={showPass ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#07111f] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
               </div>

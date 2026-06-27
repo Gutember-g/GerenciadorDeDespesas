@@ -13,9 +13,10 @@ import { EmergencyFund } from './dashboard/EmergencyFund';
 interface DashboardProps {
   refreshTrigger?: number;
   userName?: string;
+  theme?: 'light' | 'dark';
 }
 
-export const Dashboard = ({ refreshTrigger, userName }: DashboardProps) => {
+export const Dashboard = ({ refreshTrigger, userName, theme = 'dark' }: DashboardProps) => {
   const { mesAtivo, nextMonth, prevMonth } = useMes();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -121,12 +122,13 @@ export const Dashboard = ({ refreshTrigger, userName }: DashboardProps) => {
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.5fr_1fr]">
         <DespesasBarChart
+          theme={theme}
           totalReceitas={data.totalReceitas}
           necessidades={data.necessidades}
           desejos={data.desejos}
           reserva={data.reserva}
         />
-        <TopCategorias categorias={allCategories} total={data.totalDespesas} />
+        <TopCategorias theme={theme} categorias={allCategories} total={data.totalDespesas} />
       </section>
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">

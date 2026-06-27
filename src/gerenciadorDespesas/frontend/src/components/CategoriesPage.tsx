@@ -342,12 +342,12 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500/20 border-t-blue-400" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-white/10 bg-[#0d1828]/80 px-6 py-20 text-center shadow-2xl">
-          <div className="mb-4 rounded-full bg-white/5 p-4">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 px-6 py-20 text-center shadow-sm dark:shadow-2xl">
+          <div className="mb-4 rounded-full bg-slate-100 dark:bg-white/5 p-4">
             <Tag className="h-8 w-8 text-slate-500" />
           </div>
-          <h3 className="mb-1 text-lg font-medium text-slate-200">Nenhuma categoria encontrada</h3>
-          <p className="mx-auto max-w-xs text-sm text-slate-400">
+          <h3 className="mb-1 text-lg font-medium text-slate-800 dark:text-slate-200">Nenhuma categoria encontrada</h3>
+          <p className="mx-auto max-w-xs text-sm text-slate-500 dark:text-slate-400">
             Tente criar uma nova categoria ou mude o filtro para encontrar o que precisa.
           </p>
         </div>
@@ -358,7 +358,7 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
             return (
               <div 
                 key={cat.id} 
-                className="group relative flex items-center justify-between rounded-xl border border-white/10 bg-[#0d1828]/60 p-5 shadow-lg backdrop-blur-sm transition hover:border-white/20 hover:bg-[#0d1828]/95"
+                className="group relative flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/60 p-5 shadow-lg backdrop-blur-sm transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-[#0d1828]/95"
               >
                 <div className="flex items-center gap-4">
                   <div 
@@ -368,10 +368,10 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
                     <IconComponent className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-slate-100">{cat.name}</h3>
+                    <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">{cat.name}</h3>
                     <div className="mt-1 flex items-center gap-2">
                       {cat.type === 'EXPENSE' && (
-                        <span className="rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+                        <span className="rounded bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
                           {cat.budgetRuleType}
                         </span>
                       )}
@@ -408,38 +408,38 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
           >
-            <h3 className="text-xl font-bold text-white mb-4">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
               {modalMode === 'CREATE' ? 'Criar Categoria' : 'Editar Categoria'}
             </h3>
 
             {errorMessage && (
-              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-300">
+              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-600 dark:text-red-300">
                 {errorMessage}
               </div>
             )}
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Nome da Categoria</label>
+                <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Nome da Categoria</label>
                 <input
                   required
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="Ex: Assinaturas, Delivery"
-                  className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Tipo</label>
+                  <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Tipo</label>
                   <select
                     value={formType}
                     onChange={(e) => setFormType(e.target.value as any)}
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   >
                     <option value="EXPENSE">Despesa</option>
                     <option value="INCOME">Receita</option>
@@ -448,11 +448,11 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
 
                 {formType === 'EXPENSE' && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Orçamento Pai</label>
+                    <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Orçamento Pai</label>
                     <select
                       value={formBudgetRule}
                       onChange={(e) => setFormBudgetRule(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                     >
                       <option value="Necessidades">Necessidades</option>
                       <option value="Desejos">Desejos</option>
@@ -464,7 +464,7 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
 
               {/* Color Selector */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Cor de Destaque</label>
+                <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-2">Cor de Destaque</label>
                 <div className="flex flex-wrap gap-2">
                   {colorOptions.map((c) => (
                     <button
@@ -472,7 +472,7 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
                       type="button"
                       onClick={() => setFormColor(c)}
                       className={`h-7 w-7 rounded-full border-2 transition ${
-                        formColor === c ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105'
+                        formColor === c ? 'border-slate-800 dark:border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105'
                       }`}
                       style={{ backgroundColor: c }}
                     />
@@ -482,8 +482,8 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
 
               {/* Icon Selector */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Ícone</label>
-                <div className="grid grid-cols-5 gap-2 rounded-xl border border-white/10 bg-[#0d1828] p-3 max-h-40 overflow-y-auto">
+                <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-2">Ícone</label>
+                <div className="grid grid-cols-5 gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] p-3 max-h-40 overflow-y-auto">
                   {iconOptions.map((opt) => {
                     const Icon = opt.icon;
                     const isSelected = formIcon === opt.name;
@@ -495,8 +495,8 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
                         title={opt.label}
                         className={`flex h-10 w-10 items-center justify-center rounded-lg border transition ${
                           isSelected 
-                            ? 'border-blue-500 bg-blue-500/10 text-blue-400' 
-                            : 'border-white/5 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                            ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                            : 'border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white'
                         }`}
                       >
                         <Icon className="h-5 w-5" />
@@ -506,11 +506,11 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-white/10">
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 rounded-xl border border-white/10 py-3 text-sm text-slate-300 hover:bg-white/5"
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-sm text-slate-550 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                 >
                   Cancelar
                 </button>
@@ -532,11 +532,11 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
+            className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
           >
-            <h3 className="text-lg font-bold text-white mb-2">Excluir Categoria</h3>
-            <p className="text-sm text-slate-400 mb-6">
-              Tem certeza que deseja excluir a categoria <strong className="text-slate-200">{selectedCategory.name}</strong>?
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Excluir Categoria</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Tem certeza que deseja excluir a categoria <strong className="text-slate-800 dark:text-slate-200">{selectedCategory.name}</strong>?
               Esta ação removerá a categoria da listagem, mas não apagará transações passadas já salvas.
             </p>
 
@@ -544,7 +544,7 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 rounded-xl border border-white/10 py-3 text-sm text-slate-300 hover:bg-white/5"
+                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-sm text-slate-550 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
               >
                 Cancelar
               </button>

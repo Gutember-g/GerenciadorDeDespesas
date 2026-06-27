@@ -42,10 +42,10 @@ export const Regra502030 = ({ necessidades, desejos, reserva }: Regra502030Props
   ];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0d1828]/80 p-5 shadow-2xl shadow-black/20">
+    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Metas financeiras</h3>
-        <span className="rounded-lg bg-white/5 px-3 py-1 text-xs font-medium text-slate-400">50-30-20</span>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Metas financeiras</h3>
+        <span className="rounded-lg bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">50-30-20</span>
       </div>
 
       <div className="space-y-5">
@@ -78,7 +78,7 @@ export const Regra502030 = ({ necessidades, desejos, reserva }: Regra502030Props
           return (
             <div 
               key={goal.label} 
-              className={`border-b border-white/10 pb-5 last:border-0 last:pb-0 p-3 rounded-xl transition-all duration-300 ${isAlert ? 'bg-red-500/5 border border-red-500/20 shadow-lg shadow-red-500/5' : ''}`}
+              className={`border-b border-slate-100 dark:border-white/10 pb-5 last:border-0 last:pb-0 p-3 rounded-xl transition-all duration-300 ${isAlert ? 'bg-red-500/5 border border-red-500/20 shadow-lg shadow-red-500/5' : ''}`}
             >
               <div className="flex items-center gap-4">
                 <div
@@ -93,21 +93,21 @@ export const Regra502030 = ({ necessidades, desejos, reserva }: Regra502030Props
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-slate-100 flex items-center gap-2">
+                      <p className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                         {goal.label}
                         {isAlert && (
-                          <span className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${isSavings ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'}`}>
+                          <span className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${isSavings ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
                             {alertMsg}
                           </span>
                         )}
                       </p>
                       <p className="text-xs text-slate-500">{goal.description}</p>
                     </div>
-                    <span className={`text-sm font-semibold ${isAlert && !isSavings ? 'text-red-400' : 'text-slate-200'}`}>
+                    <span className={`text-sm font-semibold ${isAlert && !isSavings ? 'text-red-500 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}`}>
                       {goal.data.percentualReal.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -117,7 +117,7 @@ export const Regra502030 = ({ necessidades, desejos, reserva }: Regra502030Props
                       }}
                     />
                   </div>
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     {formatCurrency(goal.data.valorGasto)} de uma meta de {goal.data.percentualMeta}%
                   </p>
                 </div>

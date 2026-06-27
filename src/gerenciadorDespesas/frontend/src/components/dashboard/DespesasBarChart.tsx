@@ -29,9 +29,12 @@ interface DespesasBarChartProps {
   necessidades: { valorGasto: number; percentualMeta: number };
   desejos: { valorGasto: number; percentualMeta: number };
   reserva: { valorGasto: number; percentualMeta: number };
+  theme?: 'light' | 'dark';
 }
 
-export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva }: DespesasBarChartProps) => {
+export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva, theme = 'dark' }: DespesasBarChartProps) => {
+  const isDark = theme === 'dark';
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -53,10 +56,10 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
             return label;
           },
         },
-        backgroundColor: '#0d1828',
-        titleColor: '#f8fafc',
-        bodyColor: '#cbd5e1',
-        borderColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: isDark ? '#0d1828' : '#ffffff',
+        titleColor: isDark ? '#f8fafc' : '#0f172a',
+        bodyColor: isDark ? '#cbd5e1' : '#475569',
+        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.08)',
         borderWidth: 1,
         padding: 12,
         cornerRadius: 10,
@@ -68,7 +71,7 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
           display: false,
         },
         ticks: {
-          color: '#94a3b8',
+          color: isDark ? '#94a3b8' : '#64748b',
         },
         border: {
           display: false,
@@ -76,10 +79,10 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
       },
       y: {
         grid: {
-          color: 'rgba(148, 163, 184, 0.12)',
+          color: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(148, 163, 184, 0.12)',
         },
         ticks: {
-          color: '#94a3b8',
+          color: isDark ? '#94a3b8' : '#64748b',
           callback: function (value: any) {
             return new Intl.NumberFormat('pt-BR', {
               notation: 'compact',
@@ -122,23 +125,23 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
   };
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0d1828]/80 p-5 shadow-2xl shadow-black/20">
+    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Comparativo de gastos</h3>
-        <span className="rounded-lg bg-white/5 px-3 py-1 text-xs font-medium text-slate-400">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Comparativo de gastos</h3>
+        <span className="rounded-lg bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">
           Mês atual
         </span>
       </div>
       <div className="h-72">
         <Bar options={options} data={data} />
       </div>
-      <div className="mt-5 flex justify-center gap-6 text-xs text-slate-400">
+      <div className="mt-5 flex justify-center gap-6 text-xs text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded bg-blue-500" />
           <span>Gasto real</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded border border-dashed border-blue-300 bg-blue-500/20" />
+          <span className="h-3 w-3 rounded border border-dashed border-blue-400 dark:border-blue-300 bg-blue-500/20" />
           <span>Meta</span>
         </div>
       </div>

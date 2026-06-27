@@ -243,12 +243,12 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500/20 border-t-blue-400" />
         </div>
       ) : filteredCards.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-white/10 bg-[#0d1828]/80 px-6 py-20 text-center shadow-2xl">
-          <div className="mb-4 rounded-full bg-white/5 p-4">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 px-6 py-20 text-center shadow-sm dark:shadow-2xl">
+          <div className="mb-4 rounded-full bg-slate-100 dark:bg-white/5 p-4">
             <CardIcon className="h-8 w-8 text-slate-500" />
           </div>
-          <h3 className="mb-1 text-lg font-medium text-slate-200">Nenhum cartão cadastrado</h3>
-          <p className="mx-auto max-w-xs text-sm text-slate-400">
+          <h3 className="mb-1 text-lg font-medium text-slate-800 dark:text-slate-200">Nenhum cartão cadastrado</h3>
+          <p className="mx-auto max-w-xs text-sm text-slate-600 dark:text-slate-400">
             Cadastre seu primeiro cartão de crédito para centralizar suas despesas parceladas.
           </p>
         </div>
@@ -261,7 +261,7 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
             return (
               <div 
                 key={card.id} 
-                className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm transition hover:border-white/20 hover:bg-[#0d1828]/95"
+                className="flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-[#0d1828]/95"
               >
                 {/* Physical Credit Card Mockup */}
                 <div className={`relative w-full aspect-[1.586/1] rounded-2xl bg-gradient-to-br p-6 shadow-lg border flex flex-col justify-between overflow-hidden ${getThemeClasses(card.colorTheme)}`}>
@@ -303,16 +303,16 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
 
                 {/* Card Limit Info & Metrics */}
                 <div className="mt-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4 border-b border-white/5 pb-4">
+                  <div className="grid grid-cols-2 gap-4 border-b border-slate-100 dark:border-white/5 pb-4">
                     <div>
-                      <p className="text-xs text-slate-400">Limite Disponível</p>
-                      <p className="text-base font-bold text-emerald-400 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Limite Disponível</p>
+                      <p className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                         R$ {availableLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-400">Limite Total</p>
-                      <p className="text-base font-semibold text-slate-200 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Limite Total</p>
+                      <p className="text-base font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
                         R$ {card.limitAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
@@ -320,7 +320,7 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
 
                   {/* Limit Usage Bar */}
                   <div className="space-y-1">
-                    <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div 
                         className={`h-full rounded-full transition-all duration-300 ${
                           usePercent > 85 
@@ -332,20 +332,20 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                         style={{ width: `${usePercent}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                       <span>Uso do limite</span>
                       <span className="font-semibold">{usePercent.toFixed(1)}%</span>
                     </div>
                   </div>
 
                   {/* Closing vs Due Day Info */}
-                  <div className="flex items-center justify-between text-xs text-slate-400 pt-2">
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                      Fechamento: Dia <strong className="text-slate-300">{card.closingDay}</strong>
+                      Fechamento: Dia <strong className="text-slate-700 dark:text-slate-300">{card.closingDay}</strong>
                     </span>
                     <span>
-                      Vencimento: Dia <strong className="text-slate-300">{card.dueDay}</strong>
+                      Vencimento: Dia <strong className="text-slate-700 dark:text-slate-300">{card.dueDay}</strong>
                     </span>
                   </div>
 
@@ -353,14 +353,14 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                   <div className="flex gap-2 pt-3">
                     <button
                       onClick={() => openEditModal(card)}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/10 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5 hover:text-white"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                       <span>Editar</span>
                     </button>
                     <button
                       onClick={() => openDeleteModal(card)}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-500/10 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-500/10 py-2 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       <span>Remover</span>
@@ -378,38 +378,38 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
           >
-            <h3 className="text-xl font-bold text-white mb-4">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
               {modalMode === 'CREATE' ? 'Adicionar Cartão de Crédito' : 'Editar Cartão'}
             </h3>
 
             {errorMessage && (
-              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-300">
+              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-600 dark:text-red-300">
                 {errorMessage}
               </div>
             )}
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Nome do Cartão (Instituição)</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Nome do Cartão (Instituição)</label>
                 <input
                   required
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="Ex: Nubank Mastercard, XP Visa"
-                  className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Bandeira</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Bandeira</label>
                   <select
                     value={formBrand}
                     onChange={(e) => setFormBrand(e.target.value as any)}
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   >
                     <option value="Visa">Visa</option>
                     <option value="Mastercard">Mastercard</option>
@@ -418,11 +418,11 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Tema Visual</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Tema Visual</label>
                   <select
                     value={formColorTheme}
                     onChange={(e) => setFormColorTheme(e.target.value as any)}
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   >
                     <option value="purple">Roxo (Nubank)</option>
                     <option value="gold">Dourado / Bronze (XP)</option>
@@ -435,7 +435,7 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Limite Total (R$)</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Limite Total (R$)</label>
                   <input
                     required
                     type="number"
@@ -444,11 +444,11 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                     value={formLimitAmount}
                     onChange={(e) => setFormLimitAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Fatura Atual (R$)</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Fatura Atual (R$)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -456,14 +456,14 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                     value={formCurrentInvoice}
                     onChange={(e) => setFormCurrentInvoice(e.target.value)}
                     placeholder="0.00"
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Dia do Fechamento</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Dia do Fechamento</label>
                   <input
                     required
                     type="number"
@@ -471,11 +471,11 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                     max="31"
                     value={formClosingDay}
                     onChange={(e) => setFormClosingDay(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Dia do Vencimento</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Dia do Vencimento</label>
                   <input
                     required
                     type="number"
@@ -483,16 +483,16 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
                     max="31"
                     value={formDueDay}
                     onChange={(e) => setFormDueDay(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-white/10">
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 rounded-xl border border-white/10 py-3 text-sm text-slate-300 hover:bg-white/5"
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                 >
                   Cancelar
                 </button>
@@ -513,11 +513,11 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
+            className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
           >
-            <h3 className="text-lg font-bold text-white mb-2">Excluir Cartão</h3>
-            <p className="text-sm text-slate-400 mb-6">
-              Tem certeza que deseja remover o cartão <strong className="text-slate-200">{selectedCard.name}</strong>?
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Excluir Cartão</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Tem certeza que deseja remover o cartão <strong className="text-slate-800 dark:text-slate-200">{selectedCard.name}</strong>?
               Esta ação removerá o limite e o saldo da fatura da sua visão de cartões.
             </p>
 
@@ -525,7 +525,7 @@ export function CardsPage({ searchQuery }: CardsPageProps) {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 rounded-xl border border-white/10 py-3 text-sm text-slate-300 hover:bg-white/5"
+                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
               >
                 Cancelar
               </button>
