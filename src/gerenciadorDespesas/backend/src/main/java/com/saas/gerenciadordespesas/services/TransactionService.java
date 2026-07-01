@@ -64,6 +64,9 @@ public class TransactionService {
             transaction.setStatus(dto.getStatus());
         }
         transaction.setCardId("CREDITO".equals(transaction.getPaymentMethod()) ? dto.getCardId() : null);
+        transaction.setIsRecurring(dto.getIsRecurring() != null ? dto.getIsRecurring() : false);
+        transaction.setDueDay(dto.getDueDay());
+        transaction.setRecurrenceEndDate(dto.getRecurrenceEndDate());
 
         return createTransaction(transaction);
     }
@@ -78,7 +81,63 @@ public class TransactionService {
             transaction.setParentCategory(getPortugueseParentCategory(transaction.getCategory().getBudgetRuleType()));
         }
 
-        if (transaction.getIsInstallment() != null && transaction.getIsInstallment() && transaction.getTotalInstallments() > 1) {
+        if (transaction.getIsRecurring() != null && transaction.getIsRecurring()) {
+            String recurringGroupId = UUID.randomUUID().toString();
+            int dueDay = transaction.getDueDay() != null ? transaction.getDueDay() : transaction.getDate().getDayOfMonth();
+            LocalDate firstDate = transaction.getDate();
+            
+            // Adjust the day of the first date to match dueDay
+            int lengthOfFirstMonth = firstDate.lengthOfMonth();
+            LocalDate adjustedFirstDate = firstDate.withDayOfMonth(Math.min(dueDay, lengthOfFirstMonth));
+            
+            LocalDate recurrenceEndDate = transaction.getRecurrenceEndDate();
+            int maxMonths = 24; // Default limit if no end date is provided
+            
+            LocalDate currentDate = adjustedFirstDate;
+            int count = 0;
+            
+            while (true) {
+                if (recurrenceEndDate != null) {
+                    if (currentDate.isAfter(recurrenceEndDate)) {
+                        break;
+                    }
+                } else {
+                    if (count >= maxMonths) {
+                        break;
+                    }
+                }
+                
+                Transaction recurringTx = new Transaction();
+                recurringTx.setUser(transaction.getUser());
+                recurringTx.setAccount(transaction.getAccount());
+                recurringTx.setCategory(transaction.getCategory());
+                recurringTx.setParentCategory(transaction.getParentCategory());
+                recurringTx.setPaymentMethod(transaction.getPaymentMethod());
+                recurringTx.setType(transaction.getType());
+                recurringTx.setDescription(transaction.getDescription());
+                recurringTx.setAmount(transaction.getAmount());
+                recurringTx.setDate(currentDate);
+                recurringTx.setIsInstallment(false);
+                recurringTx.setTotalInstallments(1);
+                recurringTx.setCurrentInstallment(1);
+                recurringTx.setStatus(transaction.getStatus());
+                recurringTx.setCardId(transaction.getCardId());
+                
+                // Recurrence details
+                recurringTx.setIsRecurring(true);
+                recurringTx.setRecurringGroupId(recurringGroupId);
+                recurringTx.setDueDay(dueDay);
+                recurringTx.setRecurrenceEndDate(recurrenceEndDate);
+                
+                transactionsToSave.add(recurringTx);
+                
+                // Advance by 1 month
+                count++;
+                LocalDate nextMonthDate = adjustedFirstDate.plusMonths(count);
+                int lengthOfNextMonth = nextMonthDate.lengthOfMonth();
+                currentDate = nextMonthDate.withDayOfMonth(Math.min(dueDay, lengthOfNextMonth));
+            }
+        } else if (transaction.getIsInstallment() != null && transaction.getIsInstallment() && transaction.getTotalInstallments() > 1) {
             String groupId = UUID.randomUUID().toString();
             Double installmentAmount = transaction.getAmount() / transaction.getTotalInstallments();
             
@@ -191,6 +250,46 @@ public class TransactionService {
 
             transactionRepository.saveAll(futureInstallments);
             return transaction;
+        } else if (editAllFuture && transaction.getIsRecurring() && transaction.getRecurringGroupId() != null) {
+            List<Transaction> futureTransactions = transactionRepository.findByRecurringGroupIdAndDateGreaterThanEqual(
+                    transaction.getRecurringGroupId(), transaction.getDate());
+
+            Category category = categoryRepository.findById(dto.getCategoriaId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            Account account = accountRepository.findById(dto.getContaId())
+                    .orElseThrow(() -> new RuntimeException("Account not found"));
+
+            LocalDate currentBaseDate = transaction.getDate();
+            LocalDate newBaseDate = dto.getDataPrimeiraParcela();
+            long daysDifference = 0;
+            if (newBaseDate != null && currentBaseDate != null) {
+                daysDifference = java.time.temporal.ChronoUnit.DAYS.between(currentBaseDate, newBaseDate);
+            }
+
+            Long newCardId = "CREDITO".equals(dto.getMeioPagamento()) ? dto.getCardId() : null;
+            for (Transaction rt : futureTransactions) {
+                rt.setDescription(dto.getDescricao());
+                rt.setAmount(dto.getValorTotal());
+                rt.setCategory(category);
+                rt.setAccount(account);
+                rt.setParentCategory(getPortugueseParentCategory(category.getBudgetRuleType()));
+                rt.setPaymentMethod(dto.getMeioPagamento() != null ? dto.getMeioPagamento() : "DEBITO");
+                rt.setCardId(newCardId);
+                rt.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
+                if (dto.getStatus() != null) {
+                    rt.setStatus(dto.getStatus());
+                }
+
+                if (daysDifference != 0 && rt.getDate() != null) {
+                    rt.setDate(rt.getDate().plusDays(daysDifference));
+                }
+
+                rt.setDueDay(dto.getDueDay() != null ? dto.getDueDay() : rt.getDueDay());
+                rt.setRecurrenceEndDate(dto.getRecurrenceEndDate());
+            }
+
+            transactionRepository.saveAll(futureTransactions);
+            return transaction;
         } else {
             Category category = categoryRepository.findById(dto.getCategoriaId())
                     .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -222,6 +321,10 @@ public class TransactionService {
             List<Transaction> futureInstallments = transactionRepository.findByInstallmentGroupIdAndCurrentInstallmentGreaterThanEqual(
                     transaction.getInstallmentGroupId(), transaction.getCurrentInstallment());
             transactionRepository.deleteAll(futureInstallments);
+        } else if (deleteAllFuture && transaction.getIsRecurring() && transaction.getRecurringGroupId() != null) {
+            List<Transaction> futureTransactions = transactionRepository.findByRecurringGroupIdAndDateGreaterThanEqual(
+                    transaction.getRecurringGroupId(), transaction.getDate());
+            transactionRepository.deleteAll(futureTransactions);
         } else {
             transactionRepository.delete(transaction);
         }

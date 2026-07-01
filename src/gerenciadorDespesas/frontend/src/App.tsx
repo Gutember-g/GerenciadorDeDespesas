@@ -27,11 +27,12 @@ import { CategoriesPage } from './components/CategoriesPage';
 import { GoalsPage } from './components/GoalsPage';
 import { CardsPage } from './components/CardsPage';
 import { SettingsPage } from './components/SettingsPage';
+import { ProfilePage } from './components/ProfilePage';
 import { MesProvider } from './contexts/MesContext';
 import { categoryAPI, transactionAPI } from './services/api';
 import { useAuthSettings } from './contexts/AuthSettingsContext.tsx';
 
-type ActiveTab = 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings';
+type ActiveTab = 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings' | 'profile';
 
 const navItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
@@ -40,6 +41,7 @@ const navItems = [
   { id: 'categories' as const, label: 'Categorias', icon: WalletCards },
   { id: 'goals' as const, label: 'Metas', icon: Target },
   { id: 'cards' as const, label: 'Cartões', icon: CreditCard },
+  { id: 'profile' as const, label: 'Meu Perfil', icon: User },
   { id: 'settings' as const, label: 'Configurações', icon: Settings },
 ];
 
@@ -568,7 +570,7 @@ function App() {
                       <div className="absolute right-0 mt-2 z-55 w-48 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-[#0f1a2a] p-2 shadow-2xl animate-in fade-in duration-200">
                         <button
                           onClick={() => {
-                            setActiveTab('settings');
+                            setActiveTab('profile');
                             setIsUserMenuOpen(false);
                           }}
                           className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -636,6 +638,8 @@ function App() {
                     setIsFormOpen(true);
                   }}
                 />
+              ) : activeTab === 'profile' ? (
+                <ProfilePage />
               ) : (
                 <SettingsPage />
               )}
@@ -680,8 +684,8 @@ function App() {
             <span>Metas</span>
           </button>
           <button 
-            onClick={() => setActiveTab('settings')}
-            className={`flex flex-col items-center gap-1 text-[11px] ${activeTab === 'settings' ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}
+            onClick={() => setActiveTab('profile')}
+            className={`flex flex-col items-center gap-1 text-[11px] ${activeTab === 'profile' ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}
           >
             <User className="h-5 w-5" />
             <span>Perfil</span>

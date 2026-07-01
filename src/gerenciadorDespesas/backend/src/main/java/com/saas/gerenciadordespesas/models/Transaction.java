@@ -51,6 +51,14 @@ public class Transaction {
     @Column(name = "card_id")
     private Long cardId;
 
+    private Boolean isRecurring = false;
+
+    private String recurringGroupId;
+
+    private Integer dueDay;
+
+    private LocalDate recurrenceEndDate;
+
     public Transaction() {
     }
 
@@ -147,4 +155,13 @@ public class Transaction {
 
     public Long getCardId() { return cardId; }
     public void setCardId(Long cardId) { this.cardId = cardId; }
+
+    public Boolean getIsRecurring() { return isRecurring; }
+    public void setIsRecurring(Boolean isRecurring) { this.isRecurring = isRecurring; }
+    public String getRecurringGroupId() { return recurringGroupId; }
+    public void setRecurringGroupId(String recurringGroupId) { this.recurringGroupId = recurringGroupId; }
+    public Integer getDueDay() { return dueDay; }
+    public void setDueDay(Integer dueDay) { this.dueDay = dueDay; }
+    public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
+    public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
 }

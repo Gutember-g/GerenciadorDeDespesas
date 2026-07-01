@@ -36,4 +36,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByInstallmentGroupIdAndCurrentInstallmentGreaterThanEqual(
             String installmentGroupId, Integer currentInstallment);
+
+    List<Transaction> findByRecurringGroupIdAndDateGreaterThanEqual(
+            String recurringGroupId, LocalDate date);
 }

@@ -13,6 +13,9 @@ public class TransactionRequestDTO {
     private String meioPagamento;
     private String status;
     private Long cardId;
+    private Boolean isRecurring;
+    private Integer dueDay;
+    private LocalDate recurrenceEndDate;
 
     public TransactionRequestDTO() {
     }
@@ -95,5 +98,29 @@ public class TransactionRequestDTO {
 
     public void setCardId(Long cardId) {
         this.cardId = cardId;
+    }
+
+    public Boolean getIsRecurring() {
+        return isRecurring;
+    }
+
+    public void setIsRecurring(Boolean isRecurring) {
+        this.isRecurring = isRecurring;
+    }
+
+    public Integer getDueDay() {
+        return dueDay;
+    }
+
+    public void setDueDay(Integer dueDay) {
+        this.dueDay = dueDay;
+    }
+
+    public LocalDate getRecurrenceEndDate() {
+        return recurrenceEndDate;
+    }
+
+    public void setRecurrenceEndDate(LocalDate recurrenceEndDate) {
+        this.recurrenceEndDate = recurrenceEndDate;
     }
 }

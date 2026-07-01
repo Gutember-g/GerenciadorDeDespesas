@@ -19,6 +19,9 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
   const [installments, setInstallments] = useState(1);
   const [type, setType] = useState<'DEBITO' | 'CREDITO'>('DEBITO');
   const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'CREDITO' | 'DEBITO' | 'DINHEIRO'>('PIX');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [dueDay, setDueDay] = useState<number>(new Date().getDate());
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<string>('');
 
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -217,6 +220,9 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
         categoriaId: parseInt(categoryId, 10),
         meioPagamento: actualPaymentMethod,
         cardId: actualPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null,
+        isRecurring: isRecurring,
+        dueDay: isRecurring ? dueDay : null,
+        recurrenceEndDate: isRecurring && recurrenceEndDate ? recurrenceEndDate : null,
       });
 
       onSuccess();
@@ -229,6 +235,9 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
       setType('DEBITO');
       setPaymentMethod('PIX');
       setSelectedCardId('');
+      setIsRecurring(false);
+      setDueDay(new Date().getDate());
+      setRecurrenceEndDate('');
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar transação');
     } finally {
@@ -352,6 +361,54 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
                 />
               </div>
             </div>
+
+            {installments === 1 && (
+              <div className="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-55/50 dark:bg-white/5">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Marcar como gasto fixo recorrente
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-505 focus:ring-blue-500 w-4 h-4 accent-blue-500"
+                  />
+                </label>
+
+                {isRecurring && (
+                  <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-200 dark:border-white/5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="space-y-2">
+                      <label htmlFor="dueDay" className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Dia do Vencimento
+                      </label>
+                      <input
+                        id="dueDay"
+                        required={isRecurring}
+                        type="number"
+                        min="1"
+                        max="31"
+                        value={dueDay}
+                        onChange={(e) => setDueDay(parseInt(e.target.value, 10))}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828] px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="recurrenceEndDate" className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Data Fim (Opcional)
+                      </label>
+                      <input
+                        id="recurrenceEndDate"
+                        type="date"
+                        value={recurrenceEndDate}
+                        onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828] px-3 py-2 text-sm text-slate-850 dark:text-white outline-none [color-scheme:light] dark:[color-scheme:dark] focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <label htmlFor="account" className="flex items-center text-sm font-medium text-slate-650 dark:text-slate-300">

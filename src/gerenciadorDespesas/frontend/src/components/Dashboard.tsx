@@ -22,13 +22,14 @@ interface DashboardProps {
 export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate }: DashboardProps) => {
   const { mesAtivo, nextMonth, prevMonth } = useMes();
   const [data, setData] = useState<any>(null);
+  const [prevMonthData, setPrevMonthData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Dashboard Detail Modal States
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
-    type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | null;
+    type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | 'todas-categorias' | null;
     payload: any;
   }>({
     isOpen: false,
@@ -62,8 +63,21 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
     try {
       setLoading(true);
       setError(null);
-      const summary = await dashboardAPI.getSummary(mesAtivo.month, mesAtivo.year);
+      
+      let prevMonthNum = mesAtivo.month - 1;
+      let prevYearNum = mesAtivo.year;
+      if (prevMonthNum === 0) {
+        prevMonthNum = 12;
+        prevYearNum = mesAtivo.year - 1;
+      }
+
+      const [summary, prevSummary] = await Promise.all([
+        dashboardAPI.getSummary(mesAtivo.month, mesAtivo.year),
+        dashboardAPI.getSummary(prevMonthNum, prevYearNum)
+      ]);
+      
       setData(summary);
+      setPrevMonthData(prevSummary);
     } catch (err) {
       console.error(err);
       setError('Não foi possível carregar os dados do dashboard.');
@@ -114,6 +128,15 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
     ...(data.reserva.categorias || []),
   ].sort((a, b) => b.valor - a.valor);
 
+  const getMonthName = (month: number) => {
+    const date = new Date(2000, month - 1, 1);
+    const name = date.toLocaleDateString('pt-BR', { month: 'long' });
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  };
+
+  const currentMonthName = getMonthName(mesAtivo.month);
+  const prevMonthName = getMonthName(mesAtivo.month === 1 ? 12 : mesAtivo.month - 1);
+
   return (
     <div className="space-y-5 animate-in fade-in duration-500">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -160,10 +183,18 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.5fr_1fr]">
         <DespesasBarChart
           theme={theme}
-          totalReceitas={data.totalReceitas}
-          necessidades={data.necessidades}
-          desejos={data.desejos}
-          reserva={data.reserva}
+          currentMonthName={currentMonthName}
+          prevMonthName={prevMonthName}
+          currentData={{
+            necessidades: data.necessidades?.valorGasto || 0,
+            desejos: data.desejos?.valorGasto || 0,
+            reserva: data.reserva?.valorGasto || 0
+          }}
+          prevData={{
+            necessidades: prevMonthData?.necessidades?.valorGasto || 0,
+            desejos: prevMonthData?.desejos?.valorGasto || 0,
+            reserva: prevMonthData?.reserva?.valorGasto || 0
+          }}
           onChartClick={() => setModalState({ isOpen: true, type: 'grafico-mes', payload: null })}
         />
         <TopCategorias 
@@ -171,6 +202,7 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
           categorias={allCategories} 
           total={data.totalDespesas} 
           onCategoryClick={(catName) => setModalState({ isOpen: true, type: 'categoria', payload: { name: catName } })}
+          onVerTodasClick={() => setModalState({ isOpen: true, type: 'todas-categorias', payload: allCategories })}
         />
       </section>
 
@@ -208,6 +240,7 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
           modalState.type === 'reserva' ? 'Reserva de emergência' :
           modalState.type === 'grafico-mes' ? `Gastos em ${formatMonth()}` :
           modalState.type === 'categoria' ? `${modalState.payload?.name || 'Categoria'} — ${formatMonth()}` :
+          modalState.type === 'todas-categorias' ? `Gastos por Categoria — ${formatMonth()}` :
           'Detalhes'
         }
       >
@@ -223,6 +256,7 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
             transactions={modalTransactions}
             onNavigate={onNavigate}
             onClose={() => setModalState({ isOpen: false, type: null, payload: null })}
+            onChangeType={(type, payload) => setModalState(prev => ({ ...prev, type, payload }))}
           />
         )}
       </DashboardModal>

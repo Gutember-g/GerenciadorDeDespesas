@@ -3,12 +3,13 @@ import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
 import { calcularFaturaAtual } from '../../utils/cardInvoiceUtils';
 
 interface DashboardModalContentProps {
-  type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | null;
+  type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | 'todas-categorias' | null;
   payload: any;
   dashboardData: any;
   transactions: any[];
   onNavigate?: (tab: 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings') => void;
   onClose: () => void;
+  onChangeType?: (type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | 'todas-categorias' | null, payload: any) => void;
 }
 
 export const DashboardModalContent = ({
@@ -17,7 +18,8 @@ export const DashboardModalContent = ({
   dashboardData: data,
   transactions,
   onNavigate,
-  onClose
+  onClose,
+  onChangeType
 }: DashboardModalContentProps) => {
   const { formatCurrency } = useAuthSettings();
 
@@ -650,6 +652,60 @@ export const DashboardModalContent = ({
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    case 'todas-categorias': {
+      const categoriesList = payload || [];
+      const colors = ['#ff3d57', '#4f67ff', '#8b5cf6', '#22c55e', '#facc15', '#06b6d4'];
+
+      return (
+        <div className="space-y-4">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Todas as Categorias</p>
+          <div className="border border-slate-200/60 dark:border-white/5 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-white/5 max-h-[60vh] overflow-y-auto">
+            {categoriesList.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-6">Nenhuma categoria encontrada.</p>
+            ) : (
+              categoriesList.map((cat: any, index: number) => {
+                const percent = data.totalDespesas > 0 ? (cat.valor / data.totalDespesas) * 100 : 0;
+                return (
+                  <div 
+                    key={`${cat.nome}-${index}`} 
+                    onClick={() => {
+                      onChangeType?.('categoria', { name: cat.nome });
+                    }}
+                    className="p-3 hover:bg-slate-50 dark:hover:bg-white/2 cursor-pointer transition-colors space-y-1.5"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="h-3 w-3 shrink-0 rounded-full"
+                          style={{ backgroundColor: colors[index % colors.length] || '#cbd5e1' }}
+                        />
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{cat.nome}</span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                          {formatCurrency(cat.valor)}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">{percent.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                    <div className="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full" 
+                        style={{ 
+                          width: `${Math.min(percent, 100)}%`,
+                          backgroundColor: colors[index % colors.length] || '#cbd5e1'
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

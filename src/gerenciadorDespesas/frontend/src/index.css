@@ -63,3 +63,33 @@ html.dark {
   }
 }
 
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  /* Hide side menus, buttons, filters, forms, charts, headers, and footer buttons */
+  aside, nav, header, button, select, input, .sticky, [role="dialog"], .fixed, .print\:hidden {
+    display: none !important;
+  }
+  /* Make sure main content is full width */
+  main, .space-y-6, .space-y-5, .overflow-hidden {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  /* Style table print format */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px !important;
+    color: #000000 !important;
+  }
+}
+
