@@ -35,8 +35,9 @@ public class DataSeeder implements CommandLineRunner {
             long count = userRepository.count();
             System.out.println("📡 Conexão estabelecida com sucesso! Total de usuários no banco: " + count);
 
-            if (count == 0) {
-                System.out.println("🌱 Banco vazio. Inicializando sementes de dados...");
+            boolean adminExists = userRepository.findByEmail("admin@gerenciasaas.com").isPresent();
+            if (!adminExists) {
+                System.out.println("🌱 Usuário admin@gerenciasaas.com ausente. Inicializando sementes de dados...");
                 
                 // Seed base user
                 User user = new User();
@@ -44,6 +45,7 @@ public class DataSeeder implements CommandLineRunner {
                 user.setEmail("admin@gerenciasaas.com");
                 user.setPasswordHash(passwordEncoder.encode("admin123"));
                 userRepository.save(user);
+                System.out.println("✅ Usuário administrador padrão criado com sucesso.");
 
                 // Seed base account
                 Account acc = new Account();
@@ -51,6 +53,7 @@ public class DataSeeder implements CommandLineRunner {
                 acc.setUser(user);
                 acc.setType("CORRENTE");
                 accountRepository.save(acc);
+                System.out.println("✅ Conta corrente padrão criada com sucesso.");
 
                 // Seed categories
                 // Necessidades (24 subcategorias)

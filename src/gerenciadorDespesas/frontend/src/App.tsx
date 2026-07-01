@@ -17,6 +17,7 @@ import {
   WalletCards,
   Sun,
   Loader2,
+  X,
 } from 'lucide-react';
 import { TransactionForm } from './components/TransactionForm';
 import { TransactionList } from './components/TransactionList';
@@ -48,6 +49,7 @@ const navItems = [
 function App() {
   const { user, theme, currency, notifications: userNotifications, logout, updateUserPreferences, loading } = useAuthSettings();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [defaultCardIdForTransaction, setDefaultCardIdForTransaction] = useState<string | undefined>(undefined);
@@ -318,6 +320,86 @@ function App() {
         />
 
         <div className="relative flex min-h-screen">
+          {/* MOBILE SIDEBAR DRAWER */}
+          {isSidebarOpen && (
+            <div 
+              onClick={() => setIsSidebarOpen(false)}
+              className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden transition-opacity duration-300"
+            />
+          )}
+
+          <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 transition-transform duration-300 lg:hidden ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}>
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 text-white font-bold text-lg shadow-lg">
+                  <ChartNoAxesColumnIncreasing className="h-5 w-5" />
+                </div>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Finan<span className="text-blue-500">Control</span>
+                </h1>
+              </div>
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Mobile Search input */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+              <input
+                className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] pl-11 pr-4 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-blue-500"
+                placeholder="Buscar transações, metas..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 space-y-2">
+              <nav className="space-y-2">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setSearchInput('');
+                        setSearchQuery('');
+                        setIsSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/20'
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-red-650 dark:hover:text-red-300"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Sair</span>
+              </button>
+            </div>
+          </aside>
+
+          {/* DESKTOP SIDEBAR */}
           <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321]/90 px-5 py-6 backdrop-blur-xl">
             <div className="mb-10 flex items-center gap-3 px-1">
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg shadow-blue-500/25">
@@ -328,46 +410,53 @@ function App() {
               </h1>
             </div>
 
-            <nav className="flex-1 space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 space-y-2">
+              <nav className="space-y-2">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setSearchInput('');
-                      setSearchQuery('');
-                    }}
-                    className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/20'
-                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setSearchInput('');
+                        setSearchQuery('');
+                      }}
+                      className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/20'
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
 
-            <button
-              onClick={handleLogout}
-              className="mt-5 flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-red-600 dark:hover:text-red-300"
-            >
-              <LogOut className="h-5 w-5" />
-              <span>Sair</span>
-            </button>
+            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-red-650 dark:hover:text-red-300"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Sair</span>
+              </button>
+            </div>
           </aside>
 
           <main className="flex-1 pb-24 lg:pb-10">
             <div className="sticky top-0 z-30 border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-[#07111f]/80 px-4 py-4 backdrop-blur-xl md:px-8 lg:px-10">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 lg:hidden">
-                  <button className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300">
+                  <button 
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                  >
                     <Menu className="h-5 w-5" />
                   </button>
                   <h1 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -483,7 +572,7 @@ function App() {
                 <div className="ml-auto flex items-center gap-3">
                   <button 
                     onClick={() => updateUserPreferences(theme === 'dark' ? 'light' : 'dark', currency, userNotifications)}
-                    className="hidden h-11 w-11 place-items-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white md:grid"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white"
                   >
                     {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                   </button>
@@ -495,7 +584,7 @@ function App() {
                         setIsNotificationOpen(!isNotificationOpen);
                         setIsUserMenuOpen(false);
                       }}
-                      className="relative hidden h-11 w-11 place-items-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white md:grid"
+                      className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white"
                     >
                       <Bell className="h-5 w-5" />
                       {unreadCount > 0 && (
@@ -649,9 +738,9 @@ function App() {
 
         <button
           onClick={() => setIsFormOpen(true)}
-          className="fixed bottom-8 left-1/2 z-40 grid h-16 w-16 -translate-x-1/2 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 text-white shadow-2xl shadow-blue-600/40 lg:hidden"
+          className="fixed bottom-24 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/40 lg:hidden hover:scale-105 active:scale-95 transition-all"
         >
-          <Plus className="h-7 w-7" />
+          <Plus className="h-6 w-6" />
         </button>
 
         <div className="fixed bottom-0 left-0 z-30 grid w-full grid-cols-5 border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321]/95 px-4 pb-3 pt-2 backdrop-blur-xl lg:hidden">

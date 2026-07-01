@@ -81,10 +81,14 @@ public class AuthController {
         String email = credentials.get("email");
         String password = credentials.get("senha");
 
+        System.out.println("[AUTH] Tentativa de login para o e-mail: " + email);
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+            System.out.println("[AUTH] Autenticação bem-sucedida para o e-mail: " + email);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas");
+            System.err.println("[AUTH] Falha na autenticação para " + email + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas: " + e.getMessage());
         }
 
         User user = userRepository.findByEmail(email).orElseThrow();
