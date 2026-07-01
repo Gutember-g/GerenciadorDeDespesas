@@ -28,7 +28,8 @@ import { GoalsPage } from './components/GoalsPage';
 import { CardsPage } from './components/CardsPage';
 import { SettingsPage } from './components/SettingsPage';
 import { MesProvider } from './contexts/MesContext';
-import { authAPI, categoryAPI, transactionAPI } from './services/api';
+import { categoryAPI, transactionAPI } from './services/api';
+import { useAuthSettings } from './contexts/AuthSettingsContext.tsx';
 
 type ActiveTab = 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings';
 
@@ -42,22 +43,12 @@ const navItems = [
   { id: 'settings' as const, label: 'Configurações', icon: Settings },
 ];
 
-interface UserProfile {
-  nome?: string;
-  email?: string;
-  avatarColor?: string;
-}
-
 function App() {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const { user, theme, currency, notifications: userNotifications, logout, updateUserPreferences, loading } = useAuthSettings();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // Theme state
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('financontrol-theme') as 'light' | 'dark') || 'dark';
-  });
+  const [defaultCardIdForTransaction, setDefaultCardIdForTransaction] = useState<string | undefined>(undefined);
 
   // Global search & dropdown states
   const [searchInput, setSearchInput] = useState('');
@@ -74,18 +65,6 @@ function App() {
 
   // Real system notifications state
   const [notifications, setNotifications] = useState<any[]>([]);
-
-  // Apply theme to document element
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('financontrol-theme', theme);
-  }, [theme]);
 
   // Debounce search query
   useEffect(() => {
@@ -299,15 +278,22 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await authAPI.logout();
+      await logout();
     } finally {
-      setUser(null);
       setActiveTab('dashboard');
     }
   };
 
+  if (loading) {
+    return (
+      <div className="grid h-screen place-items-center bg-slate-50 dark:bg-[#07111f]">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
   if (!user) {
-    return <LoginPage onLogin={(loggedUser) => setUser({ ...loggedUser, avatarColor: 'from-amber-200 to-orange-500' })} />;
+    return <LoginPage />;
   }
 
   const userInitial = user.nome ? user.nome.charAt(0).toUpperCase() : '';
@@ -319,10 +305,14 @@ function App() {
 
         <TransactionForm
           isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
+          onClose={() => {
+            setIsFormOpen(false);
+            setDefaultCardIdForTransaction(undefined);
+          }}
           onSuccess={() => {
             triggerRefresh();
           }}
+          defaultCardId={defaultCardIdForTransaction}
         />
 
         <div className="relative flex min-h-screen">
@@ -490,7 +480,7 @@ function App() {
 
                 <div className="ml-auto flex items-center gap-3">
                   <button 
-                    onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+                    onClick={() => updateUserPreferences(theme === 'dark' ? 'light' : 'dark', currency, userNotifications)}
                     className="hidden h-11 w-11 place-items-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white md:grid"
                   >
                     {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -624,9 +614,14 @@ function App() {
 
             <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 lg:px-10">
               {activeTab === 'dashboard' ? (
-                <Dashboard refreshTrigger={refreshTrigger} userName={user.nome} />
+                <Dashboard 
+                  theme={theme} 
+                  refreshTrigger={refreshTrigger} 
+                  userName={user.nome} 
+                  onNavigate={(tab) => setActiveTab(tab)}
+                />
               ) : activeTab === 'transactions' ? (
-                <TransactionList refreshTrigger={refreshTrigger} globalSearch={searchQuery} />
+                <TransactionList refreshTrigger={refreshTrigger} globalSearch={searchQuery} onRefresh={triggerRefresh} />
               ) : activeTab === 'reports' ? (
                 <Reports refreshTrigger={refreshTrigger} />
               ) : activeTab === 'categories' ? (
@@ -634,9 +629,15 @@ function App() {
               ) : activeTab === 'goals' ? (
                 <GoalsPage searchQuery={searchQuery} />
               ) : activeTab === 'cards' ? (
-                <CardsPage searchQuery={searchQuery} />
+                <CardsPage 
+                  searchQuery={searchQuery} 
+                  onAddTransactionClick={(cardId) => {
+                    setDefaultCardIdForTransaction(cardId.toString());
+                    setIsFormOpen(true);
+                  }}
+                />
               ) : (
-                <SettingsPage user={user} onUpdateUser={(updated) => setUser({ ...user, ...updated })} />
+                <SettingsPage />
               )}
             </div>
           </main>

@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Award
 } from 'lucide-react';
+import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 
 interface Goal {
   id: number;
@@ -55,6 +56,7 @@ interface GoalsPageProps {
 }
 
 export function GoalsPage({ searchQuery }: GoalsPageProps) {
+  const { formatCurrency } = useAuthSettings();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -222,12 +224,12 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500/20 border-t-blue-400" />
         </div>
       ) : filteredGoals.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-white/10 bg-[#0d1828]/80 px-6 py-20 text-center shadow-2xl">
-          <div className="mb-4 rounded-full bg-white/5 p-4">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 px-6 py-20 text-center shadow-sm dark:shadow-2xl">
+          <div className="mb-4 rounded-full bg-slate-100 dark:bg-white/5 p-4">
             <Target className="h-8 w-8 text-slate-500" />
           </div>
-          <h3 className="mb-1 text-lg font-medium text-slate-200">Nenhuma meta encontrada</h3>
-          <p className="mx-auto max-w-xs text-sm text-slate-400">
+          <h3 className="mb-1 text-lg font-medium text-slate-800 dark:text-slate-200">Nenhuma meta encontrada</h3>
+          <p className="mx-auto max-w-xs text-sm text-slate-550 dark:text-slate-400">
             Crie sua primeira meta financeira para começar a poupar com propósito.
           </p>
         </div>
@@ -242,7 +244,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
             return (
               <div 
                 key={goal.id} 
-                className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm transition hover:border-white/20 hover:bg-[#0d1828]/95"
+                className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-[#0d1828]/95"
               >
                 {/* Decorative background glow for completed goals */}
                 {isCompleted && (
@@ -254,20 +256,20 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                     <div>
                       <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                         goal.type === 'EMERGENCY' 
-                          ? 'bg-red-500/10 text-red-400' 
+                          ? 'bg-red-500/10 text-red-600 dark:text-red-400' 
                           : goal.type === 'TRAVEL' 
-                            ? 'bg-blue-500/10 text-blue-400' 
-                            : 'bg-purple-500/10 text-purple-400'
+                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
+                            : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
                       }`}>
                         {goal.type === 'EMERGENCY' ? 'Reserva' : goal.type === 'TRAVEL' ? 'Viagem' : 'Objetivo'}
                       </span>
-                      <h3 className="mt-2 text-lg font-bold text-white leading-tight">{goal.name}</h3>
+                      <h3 className="mt-2 text-lg font-bold text-slate-800 dark:text-white leading-tight">{goal.name}</h3>
                     </div>
 
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEditModal(goal)}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white"
                         title="Editar"
                       >
                         <Edit2 className="h-4 w-4" />
@@ -284,23 +286,23 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
 
                   {/* Progress Info */}
                   <div className="space-y-1">
-                    <div className="flex items-baseline justify-between text-xs text-slate-400">
+                    <div className="flex items-baseline justify-between text-xs text-slate-500 dark:text-slate-400">
                       <span>Acumulado</span>
                       <span>Alvo</span>
                     </div>
                     <div className="flex items-baseline justify-between">
-                      <span className="text-xl font-extrabold text-blue-400">
-                        R$ {goal.currentAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      <span className="text-xl font-extrabold text-blue-650 dark:text-blue-400">
+                        {formatCurrency(goal.currentAmount)}
                       </span>
-                      <span className="text-sm font-semibold text-slate-300">
-                        R$ {goal.targetAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                        {formatCurrency(goal.targetAmount)}
                       </span>
                     </div>
                   </div>
 
                   {/* Progress Bar */}
                   <div className="space-y-1">
-                    <div className="h-2.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div 
                         className={`h-full rounded-full transition-all duration-500 ${
                           isCompleted 
@@ -310,9 +312,9 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                         style={{ width: `${percent}%` }}
                       />
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                       <span>Progresso</span>
-                      <span className={`font-bold ${isCompleted ? 'text-emerald-400' : 'text-blue-400'}`}>
+                      <span className={`font-bold ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-650 dark:text-blue-400'}`}>
                         {percent}%
                       </span>
                     </div>
@@ -320,13 +322,13 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                 </div>
 
                 {/* Footer status / Action */}
-                <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
+                <div className="mt-6 flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-4">
                   <span className={`flex items-center gap-1 text-xs ${
                     isCompleted 
-                      ? 'text-emerald-400 font-semibold' 
+                      ? 'text-emerald-600 dark:text-emerald-400 font-semibold' 
                       : isOverdue 
-                        ? 'text-red-400 font-semibold' 
-                        : 'text-slate-400'
+                        ? 'text-red-500 dark:text-red-400 font-semibold' 
+                        : 'text-slate-500 dark:text-slate-400'
                   }`}>
                     {isCompleted ? (
                       <>
@@ -349,7 +351,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                   {!isCompleted && (
                     <button
                       onClick={() => handleMarkAsCompleted(goal)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/20"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-650 dark:text-emerald-400 transition hover:bg-emerald-500/20"
                     >
                       <CheckCircle className="h-3.5 w-3.5" />
                       <span>Concluir</span>
@@ -367,34 +369,34 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
           >
-            <h3 className="text-xl font-bold text-white mb-4">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
               {modalMode === 'CREATE' ? 'Criar Meta Financeira' : 'Editar Meta'}
             </h3>
 
             {errorMessage && (
-              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-300">
+              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-650 dark:text-red-300">
                 {errorMessage}
               </div>
             )}
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Nome do Objetivo</label>
+                <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Nome do Objetivo</label>
                 <input
                   required
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="Ex: Compra de Imóvel, Viagem para Europa"
-                  className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Valor Alvo (R$)</label>
+                  <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Valor Alvo (R$)</label>
                   <input
                     required
                     type="number"
@@ -403,11 +405,11 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                     value={formTargetAmount}
                     onChange={(e) => setFormTargetAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Valor Atual Salvo (R$)</label>
+                  <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Valor Atual Salvo (R$)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -415,28 +417,28 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                     value={formCurrentAmount}
                     onChange={(e) => setFormCurrentAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Prazo Alvo</label>
+                  <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Prazo Alvo</label>
                   <input
                     required
                     type="date"
                     value={formDeadline}
                     onChange={(e) => setFormDeadline(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500 [color-scheme:dark]"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500 [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Tipo de Meta</label>
+                  <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Tipo de Meta</label>
                   <select
                     value={formType}
                     onChange={(e) => setFormType(e.target.value as any)}
-                    className="w-full rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   >
                     <option value="EMERGENCY">Reserva de Emergência</option>
                     <option value="TRAVEL">Viagem / Férias</option>
@@ -445,11 +447,11 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-white/10">
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 rounded-xl border border-white/10 py-3 text-sm text-slate-300 hover:bg-white/5"
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-sm text-slate-555 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                 >
                   Cancelar
                 </button>
@@ -470,11 +472,11 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
+            className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
           >
-            <h3 className="text-lg font-bold text-white mb-2">Excluir Meta</h3>
-            <p className="text-sm text-slate-400 mb-6">
-              Tem certeza que deseja excluir a meta <strong className="text-slate-200">{selectedGoal.name}</strong>?
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Excluir Meta</h3>
+            <p className="text-sm text-slate-550 dark:text-slate-400 mb-6">
+              Tem certeza que deseja excluir a meta <strong className="text-slate-800 dark:text-slate-200">{selectedGoal.name}</strong>?
               Os dados guardados para esta meta serão permanentemente excluídos.
             </p>
 
@@ -482,7 +484,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 rounded-xl border border-white/10 py-3 text-sm text-slate-300 hover:bg-white/5"
+                className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-sm text-slate-555 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
               >
                 Cancelar
               </button>

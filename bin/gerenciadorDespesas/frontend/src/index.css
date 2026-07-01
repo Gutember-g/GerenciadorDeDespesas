@@ -4,6 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-modal: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-chart-grid: rgba(148, 163, 184, 0.12);
+  --color-chart-label: #64748b;
+  --color-chart-tooltip: #0f172a;
+}
+
+html.dark {
+  --color-bg: #07111f;
+  --color-surface: #0d1828;
+  --color-modal: #081321;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-chart-grid: rgba(255, 255, 255, 0.08);
+  --color-chart-label: #94a3b8;
+  --color-chart-tooltip: #0d1828;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -11,32 +35,24 @@
   }
 
   html {
-    background-color: #f8fafc;
-  }
-
-  html.dark {
-    background-color: #07111f;
+    background-color: var(--color-bg);
   }
 
   body {
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: geometricPrecision;
   }
 
-  html.dark body {
-    background-color: #07111f;
-    color: #f8fafc;
-  }
-
   button,
   input,
-  select {
+  select,
+  textarea {
     font: inherit;
   }
 }
@@ -46,3 +62,4 @@
     @apply rounded-xl border border-slate-200 bg-white/80 shadow-2xl shadow-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#0d1828]/80 dark:shadow-black/20;
   }
 }
+
