@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
 import { calcularFaturaAtual } from '../../utils/cardInvoiceUtils';
+import { cardAPI } from '../../services/api';
 
 interface DashboardModalContentProps {
   type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | 'todas-categorias' | null;
@@ -22,6 +24,15 @@ export const DashboardModalContent = ({
   onChangeType
 }: DashboardModalContentProps) => {
   const { formatCurrency } = useAuthSettings();
+  const [cards, setCards] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (type === 'fatura') {
+      cardAPI.getCards()
+        .then(setCards)
+        .catch(err => console.error("Erro ao carregar cartões no dashboard", err));
+    }
+  }, [type]);
 
   if (!type || !data) return null;
 
@@ -243,11 +254,7 @@ export const DashboardModalContent = ({
     }
 
     case 'fatura': {
-      const storedCards = localStorage.getItem('financontrol_cards');
-      let cardList: any[] = [];
-      if (storedCards) {
-        cardList = JSON.parse(storedCards);
-      }
+      const cardList = cards;
 
       let nextCardDue = null;
       if (cardList.length > 0) {

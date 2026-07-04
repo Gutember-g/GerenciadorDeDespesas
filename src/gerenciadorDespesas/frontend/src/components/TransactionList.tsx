@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock, Filter, Search, TrendingDown, TrendingUp, X, Edit2, Trash2, AlertCircle, Check, Calendar, CreditCard, Tag, ChevronDown, AlertTriangle, RefreshCw, FileDown, Printer } from 'lucide-react';
-import { transactionAPI, accountAPI, categoryAPI } from '../services/api';
+import { transactionAPI, accountAPI, categoryAPI, cardAPI } from '../services/api';
 import { useMes } from '../contexts/MesContext';
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 
@@ -88,18 +88,18 @@ export function TransactionList({
     setIsEditModalOpen(true);
 
     try {
-      const storedCards = localStorage.getItem('financontrol_cards');
-      if (storedCards) {
-        setCards(JSON.parse(storedCards));
-      }
-
       if (accounts.length === 0 || categories.length === 0) {
-        const [accs, cats] = await Promise.all([
+        const [accs, cats, crds] = await Promise.all([
           accountAPI.getAccounts(),
-          categoryAPI.getCategories()
+          categoryAPI.getCategories(),
+          cardAPI.getCards()
         ]);
         setAccounts(accs);
         setCategories(cats);
+        setCards(crds);
+      } else {
+        const crds = await cardAPI.getCards();
+        setCards(crds);
       }
     } catch (err) {
       console.error("Erro ao carregar dados para edição", err);

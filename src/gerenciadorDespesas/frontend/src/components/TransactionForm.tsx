@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle, Calendar, CreditCard, Layers, Tag, X, Plus, ChevronDown, Check, Search } from 'lucide-react';
-import { accountAPI, categoryAPI, transactionAPI } from '../services/api';
+import { accountAPI, categoryAPI, transactionAPI, cardAPI } from '../services/api';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -32,32 +32,6 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
   // Cards state
   const [cards, setCards] = useState<any[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
-
-  useEffect(() => {
-    if (isOpen) {
-      const storedCards = localStorage.getItem('financontrol_cards');
-      let loadedCards: any[] = [];
-      if (storedCards) {
-        loadedCards = JSON.parse(storedCards);
-        setCards(loadedCards);
-      } else {
-        loadedCards = [
-          { id: 1, name: 'Nubank Ultravioleta', brand: 'Mastercard', limitAmount: 15000, closingDay: 5, dueDay: 12, colorTheme: 'purple' },
-          { id: 2, name: 'XP Visa Infinite', brand: 'Visa', limitAmount: 30000, closingDay: 10, dueDay: 17, colorTheme: 'gold' },
-          { id: 3, name: 'Banco Inter', brand: 'Mastercard', limitAmount: 10000, closingDay: 25, dueDay: 2, colorTheme: 'orange' }
-        ];
-        localStorage.setItem('financontrol_cards', JSON.stringify(loadedCards));
-        setCards(loadedCards);
-      }
-
-      if (defaultCardId) {
-        setSelectedCardId(defaultCardId);
-        setPaymentMethod('CREDITO');
-      } else {
-        setSelectedCardId(loadedCards[0]?.id?.toString() || '');
-      }
-    }
-  }, [isOpen, defaultCardId]);
 
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
@@ -147,20 +121,29 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
     try {
       setLoadingOptions(true);
       setError(null);
-      const [accs, cats] = await Promise.all([
+      const [accs, cats, crds] = await Promise.all([
         accountAPI.getAccounts(),
         categoryAPI.getCategories(),
+        cardAPI.getCards()
       ]);
 
       setAccounts(accs);
       setCategories(cats);
+      setCards(crds);
 
       setAccountId(accs[0]?.id?.toString() || '');
       const initialCategories = cats.filter((cat: any) => cat.type === (type === 'CREDITO' ? 'INCOME' : 'EXPENSE'));
       setCategoryId(initialCategories[0]?.id?.toString() || cats[0]?.id?.toString() || '');
+
+      if (defaultCardId) {
+        setSelectedCardId(defaultCardId);
+        setPaymentMethod('CREDITO');
+      } else {
+        setSelectedCardId(crds[0]?.id?.toString() || '');
+      }
     } catch (err) {
       console.error('Erro ao carregar dados do formulário', err);
-      setError('Falha ao carregar contas e categorias. Verifique se o backend está rodando e se você está logado.');
+      setError('Falha ao carregar contas, categorias e cartões. Verifique se o backend está rodando e se você está logado.');
     } finally {
       setLoadingOptions(false);
     }

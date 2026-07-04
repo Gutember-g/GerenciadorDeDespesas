@@ -30,7 +30,7 @@ import { CardsPage } from './components/CardsPage';
 import { SettingsPage } from './components/SettingsPage';
 import { ProfilePage } from './components/ProfilePage';
 import { MesProvider } from './contexts/MesContext';
-import { categoryAPI, transactionAPI } from './services/api';
+import { categoryAPI, transactionAPI, cardAPI } from './services/api';
 import { useAuthSettings } from './contexts/AuthSettingsContext.tsx';
 
 type ActiveTab = 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings' | 'profile';
@@ -131,8 +131,12 @@ function App() {
 
   // Dynamic Notifications Generator
   const generateDynamicNotifications = async () => {
-    const storedCards = localStorage.getItem('financontrol_cards');
-    const cardsList = storedCards ? JSON.parse(storedCards) : [];
+    let cardsList: any[] = [];
+    try {
+      cardsList = await cardAPI.getCards();
+    } catch (err) {
+      console.error("Erro ao carregar cartões para notificações", err);
+    }
     
     const storedGoals = localStorage.getItem('financontrol_goals');
     const goalsList = storedGoals ? JSON.parse(storedGoals) : [];

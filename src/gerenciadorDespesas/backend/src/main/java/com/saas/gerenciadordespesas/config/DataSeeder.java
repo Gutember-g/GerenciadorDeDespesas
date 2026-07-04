@@ -7,9 +7,11 @@ import org.springframework.stereotype.Component;
 
 import com.saas.gerenciadordespesas.models.Account;
 import com.saas.gerenciadordespesas.models.Category;
+import com.saas.gerenciadordespesas.models.CreditCard;
 import com.saas.gerenciadordespesas.models.User;
 import com.saas.gerenciadordespesas.repositories.AccountRepository;
 import com.saas.gerenciadordespesas.repositories.CategoryRepository;
+import com.saas.gerenciadordespesas.repositories.CreditCardRepository;
 import com.saas.gerenciadordespesas.repositories.UserRepository;
 
 @Component
@@ -26,6 +28,9 @@ public class DataSeeder implements CommandLineRunner {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private CreditCardRepository creditCardRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -54,6 +59,15 @@ public class DataSeeder implements CommandLineRunner {
                 acc.setType("CORRENTE");
                 accountRepository.save(acc);
                 System.out.println("✅ Conta corrente padrão criada com sucesso.");
+
+                // Seed credit cards
+                CreditCard card1 = new CreditCard(user, "Nubank Ultravioleta", "Mastercard", 15000.0, 5, 12, "purple");
+                CreditCard card2 = new CreditCard(user, "XP Visa Infinite", "Visa", 30000.0, 10, 17, "gold");
+                CreditCard card3 = new CreditCard(user, "Banco Inter", "Mastercard", 10000.0, 25, 2, "orange");
+                creditCardRepository.save(card1);
+                creditCardRepository.save(card2);
+                creditCardRepository.save(card3);
+                System.out.println("✅ Cartões de crédito padrões criados com sucesso.");
 
                 // Seed categories
                 // Necessidades (24 subcategorias)

@@ -10,7 +10,7 @@ import {
   PlusCircle
 } from 'lucide-react';
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
-import { transactionAPI } from '../services/api';
+import { transactionAPI, cardAPI } from '../services/api';
 import { calcularFaturaPorCartao } from '../utils/cardInvoiceUtils';
 
 interface CreditCard {
@@ -116,16 +116,16 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
   const [formColorTheme, setFormColorTheme] = useState<'purple' | 'gold' | 'black' | 'orange' | 'blue'>('purple');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const loadCards = () => {
-    setLoading(true);
-    const stored = localStorage.getItem('financontrol_cards');
-    if (stored) {
-      setCards(JSON.parse(stored));
-    } else {
-      localStorage.setItem('financontrol_cards', JSON.stringify(initialMockCards));
-      setCards(initialMockCards);
+  const loadCards = async () => {
+    try {
+      setLoading(true);
+      const data = await cardAPI.getCards();
+      setCards(data);
+    } catch (err) {
+      console.error("Erro ao carregar cartões da API", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // State para transações globais de crédito (usadas no cálculo de fatura)
@@ -162,11 +162,6 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     return calcularFaturaPorCartao(cards, allCreditTransactions);
   }, [cards, allCreditTransactions]);
 
-  const saveCardsList = (updatedCards: CreditCard[]) => {
-    localStorage.setItem('financontrol_cards', JSON.stringify(updatedCards));
-    setCards(updatedCards);
-  };
-
   const openCreateModal = () => {
     setModalMode('CREATE');
     setFormName('');
@@ -200,7 +195,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formLimitAmount || !formClosingDay || !formDueDay) {
       setErrorMessage('Todos os campos obrigatórios devem ser preenchidos.');
@@ -208,7 +203,6 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     }
 
     const limitNum = parseFloat(formLimitAmount);
-
     const closingNum = parseInt(formClosingDay, 10);
     const dueNum = parseInt(formDueDay, 10);
 
@@ -226,9 +220,8 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
       return;
     }
 
-    if (modalMode === 'CREATE') {
-      const newCard: CreditCard = {
-        id: Date.now(),
+    try {
+      const cardData = {
         name: formName,
         brand: formBrand,
         limitAmount: limitNum,
@@ -236,33 +229,29 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
         dueDay: dueNum,
         colorTheme: formColorTheme
       };
-      saveCardsList([...cards, newCard]);
-    } else if (modalMode === 'EDIT' && selectedCard) {
-      const updated = cards.map(c => {
-        if (c.id === selectedCard.id) {
-          return {
-            ...c,
-            name: formName,
-            brand: formBrand,
-            limitAmount: limitNum,
-            closingDay: closingNum,
-            dueDay: dueNum,
-            colorTheme: formColorTheme
-          };
-        }
-        return c;
-      });
-      saveCardsList(updated);
-    }
 
-    setIsModalOpen(false);
+      if (modalMode === 'CREATE') {
+        await cardAPI.createCard(cardData);
+      } else if (modalMode === 'EDIT' && selectedCard) {
+        await cardAPI.updateCard(selectedCard.id, cardData);
+      }
+
+      await loadCards();
+      setIsModalOpen(false);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Erro ao salvar cartão.');
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedCard) return;
-    const filtered = cards.filter(c => c.id !== selectedCard.id);
-    saveCardsList(filtered);
-    setIsModalOpen(false);
+    try {
+      await cardAPI.deleteCard(selectedCard.id);
+      await loadCards();
+      setIsModalOpen(false);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Erro ao excluir cartão.');
+    }
   };
 
   const filteredCards = cards.filter(c =>

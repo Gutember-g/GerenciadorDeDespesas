@@ -197,3 +197,54 @@ export const transactionAPI = {
         return response;
     }
 };
+
+export const cardAPI = {
+    getCards: async () => {
+        const response = await fetch(`${API_URL}/cards`, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error('Erro ao carregar cartões');
+        }
+        return response.json();
+    },
+
+    createCard: async (cardData: { name: string; brand: string; limitAmount: number; closingDay: number; dueDay: number; colorTheme: string }) => {
+        const response = await fetch(`${API_URL}/cards`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cardData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao criar cartão');
+        }
+        return response.json();
+    },
+
+    updateCard: async (id: number, cardData: { name: string; brand: string; limitAmount: number; closingDay: number; dueDay: number; colorTheme: string }) => {
+        const response = await fetch(`${API_URL}/cards/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cardData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao atualizar cartão');
+        }
+        return response.json();
+    },
+
+    deleteCard: async (id: number) => {
+        const response = await fetch(`${API_URL}/cards/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao excluir cartão');
+        }
+        return response;
+    }
+};
