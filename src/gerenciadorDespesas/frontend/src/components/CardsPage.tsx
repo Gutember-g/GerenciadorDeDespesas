@@ -24,35 +24,7 @@ interface CreditCard {
   colorTheme: 'purple' | 'gold' | 'black' | 'orange' | 'blue';
 }
 
-const initialMockCards: CreditCard[] = [
-  {
-    id: 1,
-    name: 'Nubank Ultravioleta',
-    brand: 'Mastercard',
-    limitAmount: 15000,
-    closingDay: 5,
-    dueDay: 12,
-    colorTheme: 'purple'
-  },
-  {
-    id: 2,
-    name: 'XP Visa Infinite',
-    brand: 'Visa',
-    limitAmount: 30000,
-    closingDay: 10,
-    dueDay: 17,
-    colorTheme: 'gold'
-  },
-  {
-    id: 3,
-    name: 'Banco Inter',
-    brand: 'Mastercard',
-    limitAmount: 10000,
-    closingDay: 25,
-    dueDay: 2,
-    colorTheme: 'orange'
-  }
-];
+// initialMockCards removido — cartões agora são carregados do banco pelo DataSeeder
 
 interface CardsPageProps {
   searchQuery: string;
