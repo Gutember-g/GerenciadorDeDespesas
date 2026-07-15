@@ -32,9 +32,9 @@ export function calcularPeriodoFatura(closingDay: number, referenceDate?: Date):
   // Fim do período = dia de fechamento do mês corrente
   const fimPeriodo = new Date(hoje.getFullYear(), hoje.getMonth(), closingDay);
 
-  // Se ainda não chegamos no dia de fechamento, voltamos um mês
-  if (hoje <= fimPeriodo) {
-    fimPeriodo.setMonth(fimPeriodo.getMonth() - 1);
+  // Se já passamos do dia de fechamento deste mês, o próximo fechamento é no mês seguinte
+  if (hoje > fimPeriodo) {
+    fimPeriodo.setMonth(fimPeriodo.getMonth() + 1);
   }
 
   // Início do período = dia seguinte ao fechamento do mês anterior
@@ -63,8 +63,14 @@ export function calcularFaturaAtual(
   const faturaTransactions = transactions.filter((t) => {
     if (t.cardId !== cardId) return false;
     if (t.type?.toUpperCase() !== 'EXPENSE') return false;
+    if (!t.date) return false;
 
-    const txDate = new Date(t.date);
+    // Parse da data no fuso horário local para evitar problemas de fuso horário
+    const parts = t.date.split('-');
+    if (parts.length !== 3) return false;
+    const [y, m, d] = parts.map(Number);
+    const txDate = new Date(y, m - 1, d);
+    
     return txDate >= inicio && txDate <= fim;
   });
 

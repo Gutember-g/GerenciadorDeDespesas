@@ -726,6 +726,7 @@ function App() {
               ) : activeTab === 'cards' ? (
                 <CardsPage 
                   searchQuery={searchQuery} 
+                  refreshTrigger={refreshTrigger}
                   onAddTransactionClick={(cardId) => {
                     setDefaultCardIdForTransaction(cardId.toString());
                     setIsFormOpen(true);

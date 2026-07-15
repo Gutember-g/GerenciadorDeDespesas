@@ -29,9 +29,10 @@ interface CreditCard {
 interface CardsPageProps {
   searchQuery: string;
   onAddTransactionClick?: (cardId: number) => void;
+  refreshTrigger?: number;
 }
 
-export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps) {
+export function CardsPage({ searchQuery, onAddTransactionClick, refreshTrigger }: CardsPageProps) {
   const { formatCurrency } = useAuthSettings();
   const [cards, setCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,7 +127,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
   useEffect(() => {
     loadCards();
     fetchAllCreditTransactions();
-  }, []);
+  }, [refreshTrigger]);
 
   // Cálculo reativo das faturas de todos os cartões
   const faturasMap = useMemo(() => {
