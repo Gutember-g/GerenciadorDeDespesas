@@ -170,7 +170,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
     setLoading(true);
     setError(null);
 
-    if (!description || !amount || !date || !accountId || !categoryId) {
+    if (!description || !amount || !date || !accountId || (!categoryId && !selectedGoalId)) {
       setError('Todos os campos são obrigatórios.');
       setLoading(false);
       return;
@@ -200,32 +200,21 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
     }
 
     try {
-      if (type === 'CREDITO' && selectedGoalId) {
-        // Validação de saldo disponível
-        const selectedAcc = accounts.find(a => a.id.toString() === accountId);
-        if (selectedAcc && selectedAcc.balance !== undefined && selectedAcc.balance < numAmount) {
-          setError(`Saldo insuficiente na conta selecionada (${selectedAcc.name}). Saldo disponível: ${selectedAcc.balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}.`);
-          setLoading(false);
-          return;
-        }
-
-        await goalAPI.allocateToGoal(parseInt(selectedGoalId, 10), parseInt(accountId, 10), numAmount);
-      } else {
-        await transactionAPI.createTransaction({
-          descricao: description,
-          valorTotal: numAmount,
-          dataPrimeiraParcela: date,
-          numeroParcelas: installments,
-          tipo: type,
-          contaId: parseInt(accountId, 10),
-          categoriaId: parseInt(categoryId, 10),
-          meioPagamento: actualPaymentMethod,
-          cardId: actualPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null,
-          isRecurring: isRecurring,
-          dueDay: isRecurring ? dueDay : null,
-          recurrenceEndDate: isRecurring && recurrenceEndDate ? recurrenceEndDate : null,
-        });
-      }
+      await transactionAPI.createTransaction({
+        descricao: description,
+        valorTotal: numAmount,
+        dataPrimeiraParcela: date,
+        numeroParcelas: installments,
+        tipo: type,
+        contaId: parseInt(accountId, 10),
+        categoriaId: categoryId ? parseInt(categoryId, 10) : null,
+        meioPagamento: actualPaymentMethod,
+        cardId: actualPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null,
+        goalId: selectedGoalId ? parseInt(selectedGoalId, 10) : null,
+        isRecurring: isRecurring,
+        dueDay: isRecurring ? dueDay : null,
+        recurrenceEndDate: isRecurring && recurrenceEndDate ? recurrenceEndDate : null,
+      });
 
       onSuccess();
       onClose();
@@ -301,7 +290,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
               <div className="space-y-2 p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/5 animate-in fade-in duration-200">
                 <label htmlFor="goalSelect" className="flex items-center text-sm font-medium text-blue-600 dark:text-blue-400">
                   <Target className="mr-2 h-4 w-4 text-blue-500" />
-                  Alocar em Meta (Caixinha)
+                  Destinar a uma meta (opcional)
                 </label>
                 <select
                   id="goalSelect"
@@ -309,16 +298,16 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
                   onChange={(e) => setSelectedGoalId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828] px-3.5 py-2.5 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                 >
-                  <option value="">Nenhuma (Entrada normal no saldo)</option>
+                  <option value="">Nenhuma (ir para saldo)</option>
                   {goals.map((g) => (
                     <option key={g.id} value={g.id}>
-                      {g.name} (Salvo: R$ {(g.currentAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / Meta: R$ {(g.targetAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      {g.name} (Acumulado: R$ {(g.currentAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / Alvo: R$ {(g.targetAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
                     </option>
                   ))}
                 </select>
                 {selectedGoalId && (
                   <p className="text-[11px] text-blue-600 dark:text-blue-300 font-medium">
-                    Ao confirmar, o valor será guardado nesta meta e debitado da conta escolhida abaixo.
+                    O valor será somado ao acumulado da meta e a categoria será definida automaticamente como "Aporte em Meta".
                   </p>
                 )}
               </div>

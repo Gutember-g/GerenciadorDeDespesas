@@ -139,6 +139,7 @@ public class GoalService {
         tx.setDescription("Transferência para meta: " + goal.getName());
         tx.setType("EXPENSE");
         tx.setStatus("RECEIVED");
+        tx.setGoalId(goalId);
 
         transactionRepository.save(tx);
 
@@ -195,9 +196,14 @@ public class GoalService {
         tx.setDescription("Resgate de meta: " + goal.getName());
         tx.setType("INCOME");
         tx.setStatus("RECEIVED");
+        tx.setGoalId(goalId);
 
         transactionRepository.save(tx);
 
         return goal;
+    }
+
+    public List<Transaction> getGoalHistory(Long goalId) {
+        return transactionRepository.findByGoalIdOrderByDateDesc(goalId);
     }
 }

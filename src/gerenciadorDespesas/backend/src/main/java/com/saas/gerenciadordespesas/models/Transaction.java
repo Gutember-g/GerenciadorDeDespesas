@@ -51,6 +51,9 @@ public class Transaction {
     @Column(name = "card_id")
     private Long cardId;
 
+    @Column(name = "goal_id")
+    private Long goalId;
+
     private Boolean isRecurring = false;
 
     private String recurringGroupId;
@@ -155,6 +158,9 @@ public class Transaction {
 
     public Long getCardId() { return cardId; }
     public void setCardId(Long cardId) { this.cardId = cardId; }
+
+    public Long getGoalId() { return goalId; }
+    public void setGoalId(Long goalId) { this.goalId = goalId; }
 
     public Boolean getIsRecurring() { return isRecurring; }
     public void setIsRecurring(Boolean isRecurring) { this.isRecurring = isRecurring; }
