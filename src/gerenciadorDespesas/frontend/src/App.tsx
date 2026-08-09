@@ -30,7 +30,7 @@ import { CardsPage } from './components/CardsPage';
 import { SettingsPage } from './components/SettingsPage';
 import { ProfilePage } from './components/ProfilePage';
 import { MesProvider } from './contexts/MesContext';
-import { categoryAPI, transactionAPI, cardAPI } from './services/api';
+import { categoryAPI, transactionAPI, cardAPI, goalAPI } from './services/api';
 import { useAuthSettings } from './contexts/AuthSettingsContext.tsx';
 
 type ActiveTab = 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings' | 'profile';
@@ -89,8 +89,13 @@ function App() {
       setIsSearching(true);
       try {
         // 1. Search goals
-        const storedGoals = localStorage.getItem('financontrol_goals');
-        const goalsList = storedGoals ? JSON.parse(storedGoals) : [];
+        let goalsList: any[] = [];
+        try {
+          goalsList = await goalAPI.getGoals();
+        } catch {
+          const storedGoals = localStorage.getItem('financontrol_goals');
+          goalsList = storedGoals ? JSON.parse(storedGoals) : [];
+        }
         const matchedGoals = goalsList.filter((g: any) => 
           g.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -138,8 +143,13 @@ function App() {
       console.error("Erro ao carregar cartões para notificações", err);
     }
     
-    const storedGoals = localStorage.getItem('financontrol_goals');
-    const goalsList = storedGoals ? JSON.parse(storedGoals) : [];
+    let goalsList: any[] = [];
+    try {
+      goalsList = await goalAPI.getGoals();
+    } catch (err) {
+      const storedGoals = localStorage.getItem('financontrol_goals');
+      goalsList = storedGoals ? JSON.parse(storedGoals) : [];
+    }
 
     const today = new Date();
     const currentMonth = today.getMonth() + 1;

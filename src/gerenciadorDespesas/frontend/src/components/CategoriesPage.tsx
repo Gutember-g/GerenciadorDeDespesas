@@ -66,6 +66,7 @@ interface Category {
   budgetRuleType: string; // "Necessidades", "Desejos", "Prioridades financeiras"
   color: string;
   iconName?: string;
+  isSystem?: boolean;
 }
 
 interface CategoriesPageProps {
@@ -110,7 +111,8 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
         type: cat.type === 'INCOME' ? 'INCOME' : 'EXPENSE',
         budgetRuleType: mapBudgetRule(cat.budgetRuleType),
         color: cat.color || '#3b82f6',
-        iconName: cat.iconName || getAutoIcon(cat.name)
+        iconName: cat.iconName || getAutoIcon(cat.name),
+        isSystem: !!cat.isSystem || cat.name === 'Transferência para Meta' || cat.name === 'Resgate de Meta'
       }));
 
       // Apply local edits
@@ -355,6 +357,7 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((cat) => {
             const IconComponent = iconMap[cat.iconName || 'HelpCircle'] || HelpCircle;
+            const isSystemCat = !!cat.isSystem;
             return (
               <div 
                 key={cat.id} 
@@ -368,7 +371,14 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
                     <IconComponent className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">{cat.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">{cat.name}</h3>
+                      {isSystemCat && (
+                        <span className="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                          Sistema
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-1 flex items-center gap-2">
                       {cat.type === 'EXPENSE' && (
                         <span className="rounded bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
@@ -383,20 +393,26 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
-                  <button
-                    onClick={() => openEditModal(cat)}
-                    className="rounded-lg p-2 text-slate-400 hover:bg-white/15 hover:text-white"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => openDeleteModal(cat)}
-                    className="rounded-lg p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-400"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+                {!isSystemCat ? (
+                  <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
+                    <button
+                      onClick={() => openEditModal(cat)}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-white/15 hover:text-white"
+                      title="Editar"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(cat)}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-400"
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 italic pr-1">Fixo</span>
+                )}
               </div>
             );
           })}

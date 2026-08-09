@@ -248,3 +248,87 @@ export const cardAPI = {
         return response;
     }
 };
+
+export const goalAPI = {
+    getGoals: async () => {
+        const response = await fetch(`${API_URL}/goals`, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error('Erro ao carregar metas');
+        }
+        return response.json();
+    },
+
+    createGoal: async (goalData: { name: string; targetAmount: number; currentAmount?: number; deadline: string; type: string }) => {
+        const response = await fetch(`${API_URL}/goals`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(goalData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao criar meta');
+        }
+        return response.json();
+    },
+
+    updateGoal: async (id: number, goalData: { name: string; targetAmount: number; currentAmount?: number; deadline: string; type: string }) => {
+        const response = await fetch(`${API_URL}/goals/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(goalData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao atualizar meta');
+        }
+        return response.json();
+    },
+
+    deleteGoal: async (id: number) => {
+        const response = await fetch(`${API_URL}/goals/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao excluir meta');
+        }
+        return response;
+    },
+
+    allocateToGoal: async (goalId: number, accountId: number, amount: number) => {
+        const response = await fetch(`${API_URL}/goals/${goalId}/allocate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ accountId, amount }),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || 'Erro ao alocar valor na meta');
+        }
+        return response.json();
+    },
+
+    redeemFromGoal: async (goalId: number, accountId: number, amount: number) => {
+        const response = await fetch(`${API_URL}/goals/${goalId}/redeem`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ accountId, amount }),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || 'Erro ao resgatar valor da meta');
+        }
+        return response.json();
+    }
+};
+

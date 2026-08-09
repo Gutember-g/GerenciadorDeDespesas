@@ -89,15 +89,35 @@ public class DefaultUserDataService {
             createCategory(user, "Salário", "INCOME", "Necessidades", "#22c55e");
             createCategory(user, "Rendimentos", "INCOME", "Necessidades", "#14b8a6");
         }
+
+        ensureSystemCategories(user);
+    }
+
+    public void ensureSystemCategories(User user) {
+        if (categoryRepository.findByUserIdAndName(user.getId(), "Transferência para Meta").isEmpty()) {
+            createSystemCategory(user, "Transferência para Meta", "EXPENSE", "Prioridades financeiras", "#3b82f6");
+        }
+        if (categoryRepository.findByUserIdAndName(user.getId(), "Resgate de Meta").isEmpty()) {
+            createSystemCategory(user, "Resgate de Meta", "INCOME", "Prioridades financeiras", "#10b981");
+        }
     }
 
     private void createCategory(User user, String name, String type, String ruleType, String color) {
+        createCategoryWithSystemFlag(user, name, type, ruleType, color, false);
+    }
+
+    private void createSystemCategory(User user, String name, String type, String ruleType, String color) {
+        createCategoryWithSystemFlag(user, name, type, ruleType, color, true);
+    }
+
+    private void createCategoryWithSystemFlag(User user, String name, String type, String ruleType, String color, boolean isSystem) {
         Category category = new Category();
         category.setUser(user);
         category.setName(name);
         category.setType(type);
         category.setBudgetRuleType(ruleType);
         category.setColor(color);
+        category.setIsSystem(isSystem);
         categoryRepository.save(category);
     }
 }
