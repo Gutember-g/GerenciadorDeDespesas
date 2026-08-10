@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import com.saas.gerenciadordespesas.models.Transaction;
-
 @RestController
 @RequestMapping("/api/goals")
 public class GoalController {
@@ -23,12 +21,6 @@ public class GoalController {
     public ResponseEntity<List<Goal>> getGoals() {
         List<Goal> goals = goalService.getGoalsForCurrentUser();
         return ResponseEntity.ok(goals);
-    }
-
-    @GetMapping("/{id}/history")
-    public ResponseEntity<List<Transaction>> getGoalHistory(@PathVariable Long id) {
-        List<Transaction> history = goalService.getGoalHistory(id);
-        return ResponseEntity.ok(history);
     }
 
     @PostMapping

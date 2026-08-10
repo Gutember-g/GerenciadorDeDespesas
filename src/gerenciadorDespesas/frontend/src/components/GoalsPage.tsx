@@ -9,11 +9,7 @@ import {
   AlertCircle,
   Award,
   LogOut,
-  CreditCard,
-  ReceiptText,
-  ArrowUpRight,
-  ArrowDownRight,
-  X
+  CreditCard
 } from 'lucide-react';
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 import { goalAPI, accountAPI } from '../services/api';
@@ -88,12 +84,6 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
   const [rescueError, setRescueError] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [rescuing, setRescuing] = useState(false);
-
-  // Details & History Modal State
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [detailGoal, setDetailGoal] = useState<Goal | null>(null);
-  const [goalHistory, setGoalHistory] = useState<any[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const loadGoals = async () => {
     setLoading(true);
@@ -173,21 +163,6 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
       console.error('Erro ao carregar contas para resgate', err);
     }
     setIsRescueModalOpen(true);
-  };
-
-  const openDetailsModal = async (goal: Goal) => {
-    setDetailGoal(goal);
-    setIsDetailsModalOpen(true);
-    setLoadingHistory(true);
-    try {
-      const history = await goalAPI.getGoalHistory(goal.id);
-      setGoalHistory(Array.isArray(history) ? history : []);
-    } catch (err) {
-      console.warn('Erro ao carregar histórico da meta', err);
-      setGoalHistory([]);
-    } finally {
-      setLoadingHistory(false);
-    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -322,7 +297,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Metas Financeiras</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Acompanhe o andamento dos seus objetivos e clique no card para ver o histórico de aportes.
+            Acompanhe o andamento dos seus objetivos de curto, médio e longo prazo.
           </p>
         </div>
         <button
@@ -358,9 +333,8 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
 
             return (
               <div 
-                key={goal.id}
-                onClick={() => openDetailsModal(goal)}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm transition-all duration-200 cursor-pointer hover:border-blue-500/50 dark:hover:border-blue-500/50 hover:shadow-blue-500/10 hover:-translate-y-0.5 hover:bg-slate-50 dark:hover:bg-[#0d1828]/95"
+                key={goal.id} 
+                className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/60 p-6 shadow-xl backdrop-blur-sm transition hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-[#0d1828]/95"
               >
                 {/* Decorative background glow for completed goals */}
                 {isCompleted && (
@@ -379,20 +353,20 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                       }`}>
                         {goal.type === 'EMERGENCY' ? 'Reserva' : goal.type === 'TRAVEL' ? 'Viagem' : 'Objetivo'}
                       </span>
-                      <h3 className="mt-2 text-lg font-bold text-slate-800 dark:text-white leading-tight group-hover:text-blue-500 transition-colors">{goal.name}</h3>
+                      <h3 className="mt-2 text-lg font-bold text-slate-800 dark:text-white leading-tight">{goal.name}</h3>
                     </div>
 
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); openEditModal(goal); }}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-colors"
+                        onClick={() => openEditModal(goal)}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white"
                         title="Editar"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); openDeleteModal(goal); }}
-                        className="rounded-lg p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                        onClick={() => openDeleteModal(goal)}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-400"
                         title="Excluir"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -465,10 +439,10 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                   </span>
 
                   <div className="flex items-center gap-2">
-                    {/* Botão Resgatar */}
+                    {/* Botão Resgatar (Retirar da Caixinha) */}
                     {goal.currentAmount > 0 && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); openRescueModal(goal); }}
+                        onClick={() => openRescueModal(goal)}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 transition hover:bg-blue-500/20"
                         title="Resgatar valor para o saldo principal"
                       >
@@ -479,7 +453,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
 
                     {!isCompleted && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleMarkAsCompleted(goal); }}
+                        onClick={() => handleMarkAsCompleted(goal)}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-650 dark:text-emerald-400 transition hover:bg-emerald-500/20"
                       >
                         <CheckCircle className="h-3.5 w-3.5" />
@@ -491,136 +465,6 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* MODAL DE DETALHES E HISTÓRICO DA META */}
-      {isDetailsModalOpen && detailGoal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-white/10">
-              <div>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                  detailGoal.type === 'EMERGENCY' 
-                    ? 'bg-red-500/10 text-red-600 dark:text-red-400' 
-                    : detailGoal.type === 'TRAVEL' 
-                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' 
-                      : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                }`}>
-                  {detailGoal.type === 'EMERGENCY' ? 'Reserva de Emergência' : detailGoal.type === 'TRAVEL' ? 'Viagem' : 'Objetivo'}
-                </span>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-1">{detailGoal.name}</h3>
-              </div>
-              <button
-                onClick={() => setIsDetailsModalOpen(false)}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Summary info */}
-            <div className="py-4 space-y-3 border-b border-slate-100 dark:border-white/10">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#0d1828] p-3">
-                  <span className="text-xs text-slate-400 block">Acumulado</span>
-                  <span className="text-lg font-extrabold text-blue-600 dark:text-blue-400">
-                    {formatCurrency(detailGoal.currentAmount)}
-                  </span>
-                </div>
-                <div className="rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#0d1828] p-3">
-                  <span className="text-xs text-slate-400 block">Alvo</span>
-                  <span className="text-lg font-bold text-slate-700 dark:text-slate-200">
-                    {formatCurrency(detailGoal.targetAmount)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Progresso</span>
-                  <span className="font-bold text-blue-500">
-                    {Math.min(Math.round((detailGoal.currentAmount / detailGoal.targetAmount) * 100), 100)}%
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div 
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
-                    style={{ width: `${Math.min(Math.round((detailGoal.currentAmount / detailGoal.targetAmount) * 100), 100)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* History Section */}
-            <div className="flex-1 overflow-y-auto pt-4 space-y-3">
-              <h4 className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-xs">
-                <ReceiptText className="h-4 w-4 text-blue-500" />
-                <span>Histórico de Aportes e Movimentações</span>
-              </h4>
-
-              {loadingHistory ? (
-                <div className="py-12 flex justify-center">
-                  <div className="h-7 w-7 animate-spin rounded-full border-2 border-blue-500/20 border-t-blue-400" />
-                </div>
-              ) : goalHistory.length === 0 ? (
-                <div className="py-10 text-center rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-4">
-                  <p className="text-xs text-slate-400">Nenhuma movimentação registrada nesta meta ainda.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {goalHistory.map((tx: any) => {
-                    const isIncome = tx.type === 'INCOME' || tx.tipo === 'CREDITO';
-                    const txDate = tx.date || tx.dataPrimeiraParcela || '';
-                    const formattedDate = txDate ? new Date(txDate + (txDate.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : '';
-
-                    return (
-                      <div 
-                        key={tx.id}
-                        className="flex items-center justify-between rounded-xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-[#0d1828]/50 p-3 text-xs hover:border-slate-200 dark:hover:border-white/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`rounded-full p-2 ${isIncome ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                            {isIncome ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-800 dark:text-slate-200">
-                              {tx.description || tx.descricao || (isIncome ? 'Aporte na meta' : 'Resgate de meta')}
-                            </p>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
-                              <span>{formattedDate}</span>
-                              <span>•</span>
-                              <span>{tx.category?.name || tx.subcategoria || (isIncome ? 'Aporte em Meta' : 'Resgate de Meta')}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <span className={`font-bold ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {isIncome ? '+' : '-'} {formatCurrency(tx.amount || tx.valorTotal || tx.valor || 0)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="pt-4 border-t border-slate-100 dark:border-white/10 mt-auto">
-              <button
-                type="button"
-                onClick={() => setIsDetailsModalOpen(false)}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
         </div>
       )}
 

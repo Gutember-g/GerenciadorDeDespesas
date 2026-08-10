@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.saas.gerenciadordespesas.models.Goal;
-import com.saas.gerenciadordespesas.repositories.GoalRepository;
-
 @Service
 public class TransactionService {
 
@@ -36,37 +33,22 @@ public class TransactionService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    @Autowired
-    private GoalRepository goalRepository;
-
-    @Autowired
-    private DefaultUserDataService defaultUserDataService;
-
     public List<Transaction> createTransactionFromDTO(TransactionRequestDTO dto) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        Account account = accountRepository.findById(dto.getContaId()).orElseThrow(() -> new RuntimeException("Account not found"));
-
-        Category category = null;
-        if (dto.getGoalId() != null && "CREDITO".equals(dto.getTipo())) {
-            defaultUserDataService.ensureSystemCategories(user);
-            category = categoryRepository.findByUserIdAndName(user.getId(), "Aporte em Meta")
-                    .orElseGet(() -> categoryRepository.findByUserIdAndName(user.getId(), "Transferência para Meta")
-                    .orElse(null));
-        } else {
-            if (dto.getCategoriaId() == null) {
-                throw new IllegalArgumentException("A subcategoria é obrigatória.");
-            }
-            category = categoryRepository.findById(dto.getCategoriaId()).orElseThrow(() -> new RuntimeException("Category not found"));
+        if (dto.getCategoriaId() == null) {
+            throw new IllegalArgumentException("A subcategoria é obrigatória.");
         }
 
         Transaction transaction = new Transaction();
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        Account account = accountRepository.findById(dto.getContaId()).orElseThrow(() -> new RuntimeException("Account not found"));
+        Category category = categoryRepository.findById(dto.getCategoriaId()).orElseThrow(() -> new RuntimeException("Category not found"));
+
         transaction.setUser(user);
         transaction.setAccount(account);
-        if (category != null) {
-            transaction.setCategory(category);
-            transaction.setParentCategory(getPortugueseParentCategory(category.getBudgetRuleType()));
-        }
+        transaction.setCategory(category);
+        transaction.setParentCategory(getPortugueseParentCategory(category.getBudgetRuleType()));
         if (dto.getNumeroParcelas() != null && dto.getNumeroParcelas() > 1) {
             transaction.setPaymentMethod("CREDITO");
         } else {
@@ -76,32 +58,15 @@ public class TransactionService {
         transaction.setAmount(dto.getValorTotal());
         transaction.setDate(dto.getDataPrimeiraParcela());
         transaction.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
-        transaction.setIsInstallment(dto.getNumeroParcelas() != null && dto.getNumeroParcelas() > 1);
-        transaction.setTotalInstallments(dto.getNumeroParcelas() != null ? dto.getNumeroParcelas() : 1);
+        transaction.setIsInstallment(dto.getNumeroParcelas() > 1);
+        transaction.setTotalInstallments(dto.getNumeroParcelas());
         if (dto.getStatus() != null) {
             transaction.setStatus(dto.getStatus());
         }
         transaction.setCardId("CREDITO".equals(transaction.getPaymentMethod()) ? dto.getCardId() : null);
-        transaction.setGoalId(dto.getGoalId());
         transaction.setIsRecurring(dto.getIsRecurring() != null ? dto.getIsRecurring() : false);
         transaction.setDueDay(dto.getDueDay());
         transaction.setRecurrenceEndDate(dto.getRecurrenceEndDate());
-
-        // Se for um aporte em meta via formulário de entrada
-        if (dto.getGoalId() != null && "CREDITO".equals(dto.getTipo())) {
-            Goal goal = goalRepository.findById(dto.getGoalId())
-                    .orElseThrow(() -> new RuntimeException("Goal not found"));
-            Double newCurrent = (goal.getCurrentAmount() != null ? goal.getCurrentAmount() : 0.0) + dto.getValorTotal();
-            goal.setCurrentAmount(newCurrent);
-            if (newCurrent >= goal.getTargetAmount()) {
-                goal.setStatus("COMPLETED");
-            }
-            goalRepository.save(goal);
-
-            if (transaction.getDescription() == null || transaction.getDescription().trim().isEmpty()) {
-                transaction.setDescription("Aporte na meta: " + goal.getName());
-            }
-        }
 
         return createTransaction(transaction);
     }

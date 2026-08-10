@@ -100,9 +100,6 @@ public class DefaultUserDataService {
         if (categoryRepository.findByUserIdAndName(user.getId(), "Resgate de Meta").isEmpty()) {
             createSystemCategory(user, "Resgate de Meta", "INCOME", "Prioridades financeiras", "#10b981");
         }
-        if (categoryRepository.findByUserIdAndName(user.getId(), "Aporte em Meta").isEmpty()) {
-            createSystemCategory(user, "Aporte em Meta", "INCOME", "Prioridades financeiras", "#3b82f6");
-        }
     }
 
     private void createCategory(User user, String name, String type, String ruleType, String color) {

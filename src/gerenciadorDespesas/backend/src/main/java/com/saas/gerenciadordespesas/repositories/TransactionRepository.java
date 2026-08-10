@@ -13,7 +13,6 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findByUserId(Long userId);
     List<Transaction> findByAccountId(Long accountId);
-    List<Transaction> findByGoalIdOrderByDateDesc(Long goalId);
 
     @Query("SELECT t FROM Transaction t WHERE t.user.email = :email " +
            "AND t.date >= :startDate " +

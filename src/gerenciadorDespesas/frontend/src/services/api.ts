@@ -329,14 +329,6 @@ export const goalAPI = {
             throw new Error(text || 'Erro ao resgatar valor da meta');
         }
         return response.json();
-    },
-
-    getGoalHistory: async (goalId: number) => {
-        const response = await fetch(`${API_URL}/goals/${goalId}/history`, { credentials: 'include' });
-        if (!response.ok) {
-            throw new Error('Erro ao carregar histórico da meta');
-        }
-        return response.json();
     }
 };
 
