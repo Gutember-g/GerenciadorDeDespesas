@@ -125,7 +125,6 @@ public class GoalService {
         // Garante categoria de sistema
         defaultUserDataService.ensureSystemCategories(user);
         Category systemCategory = categoryRepository.findByUserIdAndName(user.getId(), "Transferência para Meta")
-                .stream().findFirst()
                 .orElseThrow(() -> new RuntimeException("Categoria de sistema 'Transferência para Meta' não encontrada"));
 
         // Cria transação de auditoria (saída)
@@ -183,7 +182,6 @@ public class GoalService {
         // Garante categoria de sistema
         defaultUserDataService.ensureSystemCategories(user);
         Category systemCategory = categoryRepository.findByUserIdAndName(user.getId(), "Resgate de Meta")
-                .stream().findFirst()
                 .orElseThrow(() -> new RuntimeException("Categoria de sistema 'Resgate de Meta' não encontrada"));
 
         // Cria transação de auditoria (entrada)

@@ -50,8 +50,8 @@ public class TransactionService {
         Category category = null;
         if (dto.getGoalId() != null && "CREDITO".equals(dto.getTipo())) {
             defaultUserDataService.ensureSystemCategories(user);
-            category = categoryRepository.findByUserIdAndName(user.getId(), "Aporte em Meta").stream().findFirst()
-                    .orElseGet(() -> categoryRepository.findByUserIdAndName(user.getId(), "Transferência para Meta").stream().findFirst()
+            category = categoryRepository.findByUserIdAndName(user.getId(), "Aporte em Meta")
+                    .orElseGet(() -> categoryRepository.findByUserIdAndName(user.getId(), "Transferência para Meta")
                     .orElse(null));
         } else {
             if (dto.getCategoriaId() == null) {
