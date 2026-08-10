@@ -22,8 +22,6 @@ public class Goal {
     
     private String type; // EMERGENCY, TRAVEL, OTHER
     
-    private String deadline;
-
     private String status; // IN_PROGRESS, COMPLETED
 
     public Goal() {
@@ -42,8 +40,6 @@ public class Goal {
     public void setCurrentAmount(Double currentAmount) { this.currentAmount = currentAmount; }
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
-    public String getDeadline() { return deadline; }
-    public void setDeadline(String deadline) { this.deadline = deadline; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 }

@@ -22,9 +22,6 @@ public class Category {
 
     private String color;
 
-    @Column(name = "is_system")
-    private Boolean isSystem = false;
-
     public Category() {
     }
 
@@ -41,6 +38,4 @@ public class Category {
     public void setBudgetRuleType(String budgetRuleType) { this.budgetRuleType = budgetRuleType; }
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
-    public Boolean getIsSystem() { return isSystem != null ? isSystem : false; }
-    public void setIsSystem(Boolean isSystem) { this.isSystem = isSystem; }
 }

@@ -208,7 +208,6 @@ public class DashboardService {
         List<Transaction> ruleExpenses = transactions.stream()
                 .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
                              t.getCategory() != null &&
-                             (t.getCategory().getIsSystem() == null || !t.getCategory().getIsSystem()) &&
                              getNormalizedRuleType(ruleType).equals(getNormalizedRuleType(t.getCategory().getBudgetRuleType())))
                 .collect(Collectors.toList());
 

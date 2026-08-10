@@ -7,12 +7,9 @@ import {
   CheckCircle, 
   Clock, 
   AlertCircle,
-  Award,
-  LogOut,
-  CreditCard
+  Award
 } from 'lucide-react';
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
-import { goalAPI, accountAPI } from '../services/api';
 
 interface Goal {
   id: number;
@@ -63,7 +60,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal State for Create / Edit / Delete
+  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'CREATE' | 'EDIT' | 'DELETE'>('CREATE');
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
@@ -76,41 +73,16 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
   const [formType, setFormType] = useState<'EMERGENCY' | 'TRAVEL' | 'OTHER'>('EMERGENCY');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Rescue Modal State (Retirar da Caixinha)
-  const [isRescueModalOpen, setIsRescueModalOpen] = useState(false);
-  const [rescueGoal, setRescueGoal] = useState<Goal | null>(null);
-  const [rescueAmount, setRescueAmount] = useState('');
-  const [rescueAccountId, setRescueAccountId] = useState('');
-  const [rescueError, setRescueError] = useState<string | null>(null);
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [rescuing, setRescuing] = useState(false);
-
-  const loadGoals = async () => {
+  const loadGoals = () => {
     setLoading(true);
-    try {
-      const data = await goalAPI.getGoals();
-      if (Array.isArray(data) && data.length > 0) {
-        setGoals(data);
-      } else {
-        const stored = localStorage.getItem('financontrol_goals');
-        if (stored) {
-          setGoals(JSON.parse(stored));
-        } else {
-          setGoals(initialMockGoals);
-        }
-      }
-    } catch (err) {
-      console.warn('Erro ao carregar metas via API backend, usando fallback local', err);
-      const stored = localStorage.getItem('financontrol_goals');
-      if (stored) {
-        setGoals(JSON.parse(stored));
-      } else {
-        localStorage.setItem('financontrol_goals', JSON.stringify(initialMockGoals));
-        setGoals(initialMockGoals);
-      }
-    } finally {
-      setLoading(false);
+    const stored = localStorage.getItem('financontrol_goals');
+    if (stored) {
+      setGoals(JSON.parse(stored));
+    } else {
+      localStorage.setItem('financontrol_goals', JSON.stringify(initialMockGoals));
+      setGoals(initialMockGoals);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -151,21 +123,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
     setIsModalOpen(true);
   };
 
-  const openRescueModal = async (goal: Goal) => {
-    setRescueGoal(goal);
-    setRescueAmount('');
-    setRescueError(null);
-    try {
-      const accs = await accountAPI.getAccounts();
-      setAccounts(accs);
-      setRescueAccountId(accs[0]?.id?.toString() || '');
-    } catch (err) {
-      console.error('Erro ao carregar contas para resgate', err);
-    }
-    setIsRescueModalOpen(true);
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formTargetAmount || !formDeadline) {
       setErrorMessage('Todos os campos obrigatórios devem ser preenchidos.');
@@ -184,107 +142,59 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
       return;
     }
 
-    const payload = {
-      name: formName,
-      targetAmount: targetNum,
-      currentAmount: currentNum,
-      deadline: formDeadline,
-      type: formType,
-    };
+    const isCompleted = currentNum >= targetNum;
 
-    try {
-      if (modalMode === 'CREATE') {
-        await goalAPI.createGoal(payload);
-      } else if (modalMode === 'EDIT' && selectedGoal) {
-        await goalAPI.updateGoal(selectedGoal.id, payload);
-      }
-      await loadGoals();
-      setIsModalOpen(false);
-    } catch (err: any) {
-      // Fallback local se backend falhar
-      const isCompleted = currentNum >= targetNum;
-      if (modalMode === 'CREATE') {
-        const newGoal: Goal = {
-          id: Date.now(),
-          ...payload,
-          status: isCompleted ? 'COMPLETED' : 'IN_PROGRESS'
-        };
-        saveGoalsList([...goals, newGoal]);
-      } else if (modalMode === 'EDIT' && selectedGoal) {
-        const updated = goals.map(g => g.id === selectedGoal.id ? { ...g, ...payload, status: isCompleted ? 'COMPLETED' as const : 'IN_PROGRESS' as const } : g);
-        saveGoalsList(updated);
-      }
-      setIsModalOpen(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedGoal) return;
-    try {
-      await goalAPI.deleteGoal(selectedGoal.id);
-      await loadGoals();
-    } catch (err) {
-      const filtered = goals.filter(g => g.id !== selectedGoal.id);
-      saveGoalsList(filtered);
-    }
-    setIsModalOpen(false);
-  };
-
-  const handleRescueSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!rescueGoal || !rescueAmount || !rescueAccountId) {
-      setRescueError('Preencha o valor e a conta de destino.');
-      return;
-    }
-
-    const numAmount = parseFloat(rescueAmount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setRescueError('O valor a resgatar deve ser maior que zero.');
-      return;
-    }
-
-    if (numAmount > rescueGoal.currentAmount) {
-      setRescueError(`O valor não pode ultrapassar o acumulado atual de ${formatCurrency(rescueGoal.currentAmount)}.`);
-      return;
-    }
-
-    setRescuing(true);
-    setRescueError(null);
-
-    try {
-      await goalAPI.redeemFromGoal(rescueGoal.id, parseInt(rescueAccountId, 10), numAmount);
-      await loadGoals();
-      setIsRescueModalOpen(false);
-    } catch (err: any) {
-      setRescueError(err.message || 'Erro ao efetuar resgate da meta.');
-    } finally {
-      setRescuing(false);
-    }
-  };
-
-  const handleMarkAsCompleted = async (goal: Goal) => {
-    try {
-      await goalAPI.updateGoal(goal.id, {
-        name: goal.name,
-        targetAmount: goal.targetAmount,
-        currentAmount: goal.targetAmount,
-        deadline: goal.deadline,
-        type: goal.type
-      });
-      await loadGoals();
-    } catch (err) {
+    if (modalMode === 'CREATE') {
+      const newGoal: Goal = {
+        id: Date.now(),
+        name: formName,
+        targetAmount: targetNum,
+        currentAmount: currentNum,
+        deadline: formDeadline,
+        type: formType,
+        status: isCompleted ? 'COMPLETED' : 'IN_PROGRESS'
+      };
+      saveGoalsList([...goals, newGoal]);
+    } else if (modalMode === 'EDIT' && selectedGoal) {
       const updated = goals.map(g => {
-        if (g.id === goal.id) {
+        if (g.id === selectedGoal.id) {
           return {
             ...g,
-            currentAmount: g.targetAmount,
-            status: 'COMPLETED' as const
+            name: formName,
+            targetAmount: targetNum,
+            currentAmount: currentNum,
+            deadline: formDeadline,
+            type: formType,
+            status: isCompleted ? ('COMPLETED' as const) : ('IN_PROGRESS' as const)
           };
         }
         return g;
       });
       saveGoalsList(updated);
     }
+
+    setIsModalOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (!selectedGoal) return;
+    const filtered = goals.filter(g => g.id !== selectedGoal.id);
+    saveGoalsList(filtered);
+    setIsModalOpen(false);
+  };
+
+  const handleMarkAsCompleted = (goal: Goal) => {
+    const updated = goals.map(g => {
+      if (g.id === goal.id) {
+        return {
+          ...g,
+          currentAmount: g.targetAmount,
+          status: 'COMPLETED' as const
+        };
+      }
+      return g;
+    });
+    saveGoalsList(updated);
   };
 
   const filteredGoals = goals.filter(g =>
@@ -438,110 +348,19 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
                     )}
                   </span>
 
-                  <div className="flex items-center gap-2">
-                    {/* Botão Resgatar (Retirar da Caixinha) */}
-                    {goal.currentAmount > 0 && (
-                      <button
-                        onClick={() => openRescueModal(goal)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 transition hover:bg-blue-500/20"
-                        title="Resgatar valor para o saldo principal"
-                      >
-                        <LogOut className="h-3.5 w-3.5" />
-                        <span>Resgatar</span>
-                      </button>
-                    )}
-
-                    {!isCompleted && (
-                      <button
-                        onClick={() => handleMarkAsCompleted(goal)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-650 dark:text-emerald-400 transition hover:bg-emerald-500/20"
-                      >
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        <span>Concluir</span>
-                      </button>
-                    )}
-                  </div>
+                  {!isCompleted && (
+                    <button
+                      onClick={() => handleMarkAsCompleted(goal)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-650 dark:text-emerald-400 transition hover:bg-emerald-500/20"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span>Concluir</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* MODAL DE RESGATE DE VALOR (RETIRAR DA CAIXINHA) */}
-      {isRescueModalOpen && rescueGoal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 shadow-2xl animate-in scale-in duration-200"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Resgatar da Meta</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{rescueGoal.name} — Acumulado: {formatCurrency(rescueGoal.currentAmount)}</p>
-              </div>
-              <div className="rounded-full bg-blue-500/10 p-2 text-blue-500">
-                <LogOut className="h-5 w-5" />
-              </div>
-            </div>
-
-            {rescueError && (
-              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-650 dark:text-red-300">
-                {rescueError}
-              </div>
-            )}
-
-            <form onSubmit={handleRescueSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Valor a Resgatar (R$)</label>
-                <input
-                  required
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  max={rescueGoal.currentAmount}
-                  value={rescueAmount}
-                  onChange={(e) => setRescueAmount(e.target.value)}
-                  placeholder="0,00"
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="flex items-center text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">
-                  <CreditCard className="mr-2 h-4 w-4 text-slate-400" />
-                  Conta de Destino (obrigatório)
-                </label>
-                <select
-                  required
-                  value={rescueAccountId}
-                  onChange={(e) => setRescueAccountId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
-                >
-                  {accounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>{acc.name} (Saldo: {formatCurrency(acc.balance || 0)})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setIsRescueModalOpen(false)}
-                  className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 py-3 text-sm text-slate-555 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={rescuing}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-500 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:brightness-110 disabled:opacity-60"
-                >
-                  {rescuing ? 'Resgatando...' : 'Confirmar Resgate'}
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
 
