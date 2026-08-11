@@ -1,40 +1,17 @@
-package com.saas.gerenciadordespesas.models;
+package com.saas.gerenciadordespesas.dto;
 
-import jakarta.persistence.*;
 import java.time.LocalDate;
 
-@Entity
-@Table(name = "goals")
-public class Goal {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
+public class GoalRequestDTO {
     private String name;
-
     private Double targetAmount;
-    
-    private Double currentAmount = 0.0;
-    
-    private String type; // EMERGENCY, TRAVEL, OTHER
-    
-    private String status; // IN_PROGRESS, COMPLETED
-
+    private Double currentAmount;
+    private String type;
+    private String status;
     private LocalDate deadline;
 
-    public Goal() {
-    }
+    public GoalRequestDTO() {}
 
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public Double getTargetAmount() { return targetAmount; }
@@ -48,4 +25,3 @@ public class Goal {
     public LocalDate getDeadline() { return deadline; }
     public void setDeadline(LocalDate deadline) { this.deadline = deadline; }
 }
-

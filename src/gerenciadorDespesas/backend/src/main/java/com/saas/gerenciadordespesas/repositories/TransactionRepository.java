@@ -39,4 +39,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByRecurringGroupIdAndDateGreaterThanEqual(
             String recurringGroupId, LocalDate date);
+
+    List<Transaction> findByGoalIdOrderByDateDesc(Long goalId);
 }

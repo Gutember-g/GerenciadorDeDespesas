@@ -10,6 +10,7 @@ import com.saas.gerenciadordespesas.repositories.CategoryRepository;
 import com.saas.gerenciadordespesas.repositories.TransactionRepository;
 import com.saas.gerenciadordespesas.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,10 @@ public class TransactionService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    @Lazy
+    private GoalService goalService;
 
     public List<Transaction> createTransactionFromDTO(TransactionRequestDTO dto) {
         if (dto.getCategoriaId() == null) {
@@ -67,8 +72,18 @@ public class TransactionService {
         transaction.setIsRecurring(dto.getIsRecurring() != null ? dto.getIsRecurring() : false);
         transaction.setDueDay(dto.getDueDay());
         transaction.setRecurrenceEndDate(dto.getRecurrenceEndDate());
+        transaction.setGoalId(dto.getGoalId());
 
-        return createTransaction(transaction);
+        List<Transaction> saved = createTransaction(transaction);
+
+        // Adjust goal amount if a goal is linked (only for single non-recurring transactions, apply to the full amount)
+        if (dto.getGoalId() != null) {
+            boolean isIncome = "CREDITO".equals(dto.getTipo());
+            double delta = isIncome ? dto.getValorTotal() : -dto.getValorTotal();
+            goalService.adjustGoalAmount(dto.getGoalId(), delta);
+        }
+
+        return saved;
     }
 
     public List<Transaction> createTransaction(Transaction transaction) {
@@ -296,6 +311,14 @@ public class TransactionService {
             Account account = accountRepository.findById(dto.getContaId())
                     .orElseThrow(() -> new RuntimeException("Account not found"));
 
+            // Revert old goal effect before updating
+            Long oldGoalId = transaction.getGoalId();
+            if (oldGoalId != null) {
+                boolean wasIncome = "INCOME".equals(transaction.getType());
+                double revertDelta = wasIncome ? -transaction.getAmount() : transaction.getAmount();
+                goalService.adjustGoalAmount(oldGoalId, revertDelta);
+            }
+
             transaction.setDescription(dto.getDescricao());
             transaction.setAmount(dto.getValorTotal());
             transaction.setDate(dto.getDataPrimeiraParcela());
@@ -305,8 +328,16 @@ public class TransactionService {
             transaction.setPaymentMethod(dto.getMeioPagamento() != null ? dto.getMeioPagamento() : "DEBITO");
             transaction.setCardId("CREDITO".equals(transaction.getPaymentMethod()) ? dto.getCardId() : null);
             transaction.setType("CREDITO".equals(dto.getTipo()) ? "INCOME" : "EXPENSE");
+            transaction.setGoalId(dto.getGoalId());
             if (dto.getStatus() != null) {
                 transaction.setStatus(dto.getStatus());
+            }
+
+            // Apply new goal effect
+            if (dto.getGoalId() != null) {
+                boolean isIncome = "CREDITO".equals(dto.getTipo());
+                double delta = isIncome ? dto.getValorTotal() : -dto.getValorTotal();
+                goalService.adjustGoalAmount(dto.getGoalId(), delta);
             }
 
             return transactionRepository.save(transaction);
@@ -320,12 +351,31 @@ public class TransactionService {
         if (deleteAllFuture && transaction.getIsInstallment() && transaction.getInstallmentGroupId() != null) {
             List<Transaction> futureInstallments = transactionRepository.findByInstallmentGroupIdAndCurrentInstallmentGreaterThanEqual(
                     transaction.getInstallmentGroupId(), transaction.getCurrentInstallment());
+            // Revert goal amounts for all deleted installments
+            for (Transaction inst : futureInstallments) {
+                if (inst.getGoalId() != null) {
+                    boolean wasIncome = "INCOME".equals(inst.getType());
+                    goalService.adjustGoalAmount(inst.getGoalId(), wasIncome ? -inst.getAmount() : inst.getAmount());
+                }
+            }
             transactionRepository.deleteAll(futureInstallments);
         } else if (deleteAllFuture && transaction.getIsRecurring() && transaction.getRecurringGroupId() != null) {
             List<Transaction> futureTransactions = transactionRepository.findByRecurringGroupIdAndDateGreaterThanEqual(
                     transaction.getRecurringGroupId(), transaction.getDate());
+            for (Transaction rt : futureTransactions) {
+                if (rt.getGoalId() != null) {
+                    boolean wasIncome = "INCOME".equals(rt.getType());
+                    goalService.adjustGoalAmount(rt.getGoalId(), wasIncome ? -rt.getAmount() : rt.getAmount());
+                }
+            }
             transactionRepository.deleteAll(futureTransactions);
         } else {
+            // Revert goal amount for single transaction
+            if (transaction.getGoalId() != null) {
+                boolean wasIncome = "INCOME".equals(transaction.getType());
+                double revertDelta = wasIncome ? -transaction.getAmount() : transaction.getAmount();
+                goalService.adjustGoalAmount(transaction.getGoalId(), revertDelta);
+            }
             transactionRepository.delete(transaction);
         }
     }

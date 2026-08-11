@@ -16,6 +16,7 @@ public class TransactionRequestDTO {
     private Boolean isRecurring;
     private Integer dueDay;
     private LocalDate recurrenceEndDate;
+    private Long goalId;
 
     public TransactionRequestDTO() {
     }
@@ -122,5 +123,13 @@ public class TransactionRequestDTO {
 
     public void setRecurrenceEndDate(LocalDate recurrenceEndDate) {
         this.recurrenceEndDate = recurrenceEndDate;
+    }
+
+    public Long getGoalId() {
+        return goalId;
+    }
+
+    public void setGoalId(Long goalId) {
+        this.goalId = goalId;
     }
 }

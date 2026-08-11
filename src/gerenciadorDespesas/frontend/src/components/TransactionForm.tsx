@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowDownCircle, ArrowUpCircle, Calendar, CreditCard, Layers, Tag, X, Plus, ChevronDown, Check, Search } from 'lucide-react';
-import { accountAPI, categoryAPI, transactionAPI, cardAPI } from '../services/api';
+import { ArrowDownCircle, ArrowUpCircle, Calendar, CreditCard, Layers, Tag, X, Plus, ChevronDown, Check, Search, Target } from 'lucide-react';
+import { accountAPI, categoryAPI, transactionAPI, cardAPI, goalAPI } from '../services/api';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -32,6 +32,10 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
   // Cards state
   const [cards, setCards] = useState<any[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
+
+  // Goal linking state
+  const [goals, setGoals] = useState<any[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<string>('');
 
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
@@ -121,15 +125,17 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
     try {
       setLoadingOptions(true);
       setError(null);
-      const [accs, cats, crds] = await Promise.all([
+      const [accs, cats, crds, gls] = await Promise.all([
         accountAPI.getAccounts(),
         categoryAPI.getCategories(),
-        cardAPI.getCards()
+        cardAPI.getCards(),
+        goalAPI.getGoals().catch(() => [])
       ]);
 
       setAccounts(accs);
       setCategories(cats);
       setCards(crds);
+      setGoals(gls);
 
       setAccountId(accs[0]?.id?.toString() || '');
       const initialCategories = cats.filter((cat: any) => cat.type === (type === 'CREDITO' ? 'INCOME' : 'EXPENSE'));
@@ -176,6 +182,16 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
       return;
     }
 
+    // Validate goal withdrawal
+    if (selectedGoalId && type === 'DEBITO') {
+      const linkedGoal = goals.find(g => g.id.toString() === selectedGoalId);
+      if (linkedGoal && numAmount > linkedGoal.currentAmount) {
+        setError(`O valor de retirada (${numAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}) não pode exceder o acumulado da meta (${linkedGoal.currentAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}).`);
+        setLoading(false);
+        return;
+      }
+    }
+
     if (installments < 1 || installments > 48) {
       setError('O número de parcelas deve ser entre 1 e 48.');
       setLoading(false);
@@ -206,6 +222,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
         isRecurring: isRecurring,
         dueDay: isRecurring ? dueDay : null,
         recurrenceEndDate: isRecurring && recurrenceEndDate ? recurrenceEndDate : null,
+        goalId: selectedGoalId ? parseInt(selectedGoalId, 10) : null,
       });
 
       onSuccess();
@@ -218,6 +235,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
       setType('DEBITO');
       setPaymentMethod('PIX');
       setSelectedCardId('');
+      setSelectedGoalId('');
       setIsRecurring(false);
       setDueDay(new Date().getDate());
       setRecurrenceEndDate('');
@@ -628,6 +646,43 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
                 )}
               </div>
             </div>
+
+            {/* Goal Linking Field */}
+            {goals.length > 0 && (
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-slate-650 dark:text-slate-300">
+                  <Target className="mr-2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                  {type === 'CREDITO' ? 'Adicionar a uma meta? (opcional)' : 'Retirar de uma meta? (opcional)'}
+                </label>
+                <select
+                  value={selectedGoalId}
+                  onChange={(e) => setSelectedGoalId(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-slate-800 dark:text-white outline-none transition-colors focus:border-blue-500"
+                >
+                  <option value="">Nenhuma meta</option>
+                  {goals
+                    .filter(g => {
+                      if (type === 'CREDITO') return g.status !== 'COMPLETED';
+                      return g.currentAmount > 0;
+                    })
+                    .map(g => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} ({((g.currentAmount / g.targetAmount) * 100).toFixed(0)}% - {g.currentAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+                      </option>
+                    ))
+                  }
+                </select>
+                {selectedGoalId && type === 'DEBITO' && (() => {
+                  const goal = goals.find(g => g.id.toString() === selectedGoalId);
+                  if (!goal) return null;
+                  return (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Disponível para retirada: {goal.currentAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
           </form>
 
           <div className="border-t border-slate-100 dark:border-white/10 bg-white/90 dark:bg-[#081321]/90 p-6 backdrop-blur-xl">
