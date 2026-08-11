@@ -48,7 +48,11 @@ public class DashboardService {
 
         List<Transaction> allTransactions = transactionRepository.findByUserId(userId);
         
-        List<Transaction> monthTransactions = transactionRepository.findByUserIdAndMonthYear(userId, targetMonth, targetYear);
+        LocalDate startDate = LocalDate.of(targetYear, targetMonth, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        List<Transaction> monthTransactions = transactionRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
+
 
         Double totalReceitas = monthTransactions.stream()
                 .filter(t -> "INCOME".equalsIgnoreCase(t.getType()))
