@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowDownCircle, ArrowUpCircle, Calendar, CreditCard, Layers, Tag, X, Plus, ChevronDown, Check, Search } from 'lucide-react';
-import { accountAPI, categoryAPI, transactionAPI } from '../services/api';
+import { ArrowDownCircle, ArrowUpCircle, Calendar, CreditCard, Layers, Tag, X, Plus, ChevronDown, Check, Search, Target } from 'lucide-react';
+import { accountAPI, categoryAPI, transactionAPI, cardAPI, goalAPI } from '../services/api';
+import { CurrencyInput } from './CurrencyInput';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -11,14 +12,16 @@ interface TransactionFormProps {
 
 export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: TransactionFormProps) {
   const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [formattedAmount, setFormattedAmount] = useState('');
+  const [amount, setAmount] = useState(0);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [accountId, setAccountId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [installments, setInstallments] = useState(1);
   const [type, setType] = useState<'DEBITO' | 'CREDITO'>('DEBITO');
   const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'CREDITO' | 'DEBITO' | 'DINHEIRO'>('PIX');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [dueDay, setDueDay] = useState<number>(new Date().getDate());
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<string>('');
 
   const [accounts, setAccounts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -30,31 +33,9 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
   const [cards, setCards] = useState<any[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string>('');
 
-  useEffect(() => {
-    if (isOpen) {
-      const storedCards = localStorage.getItem('financontrol_cards');
-      let loadedCards: any[] = [];
-      if (storedCards) {
-        loadedCards = JSON.parse(storedCards);
-        setCards(loadedCards);
-      } else {
-        loadedCards = [
-          { id: 1, name: 'Nubank Ultravioleta', brand: 'Mastercard', limitAmount: 15000, closingDay: 5, dueDay: 12, colorTheme: 'purple' },
-          { id: 2, name: 'XP Visa Infinite', brand: 'Visa', limitAmount: 30000, closingDay: 10, dueDay: 17, colorTheme: 'gold' },
-          { id: 3, name: 'Banco Inter', brand: 'Mastercard', limitAmount: 10000, closingDay: 25, dueDay: 2, colorTheme: 'orange' }
-        ];
-        localStorage.setItem('financontrol_cards', JSON.stringify(loadedCards));
-        setCards(loadedCards);
-      }
-
-      if (defaultCardId) {
-        setSelectedCardId(defaultCardId);
-        setPaymentMethod('CREDITO');
-      } else {
-        setSelectedCardId(loadedCards[0]?.id?.toString() || '');
-      }
-    }
-  }, [isOpen, defaultCardId]);
+  // Goal linking state
+  const [goals, setGoals] = useState<any[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<string>('');
 
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
@@ -88,7 +69,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
     let parent = cat.budgetRuleType || 'Necessidades';
     if (parent === 'ESSENTIAL') parent = 'Necessidades';
     if (parent === 'WANTS') parent = 'Desejos';
-    if (parent === 'SAVINGS') parent = 'Prioridades financeiras';
+    if (parent === 'SAVINGS' || parent === 'Prioridades financeiras') parent = 'Reserva';
     
     if (!groups[parent]) {
       groups[parent] = [];
@@ -144,50 +125,65 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
     try {
       setLoadingOptions(true);
       setError(null);
-      const [accs, cats] = await Promise.all([
+      const [accs, cats, crds, gls] = await Promise.all([
         accountAPI.getAccounts(),
         categoryAPI.getCategories(),
+        cardAPI.getCards(),
+        goalAPI.getGoals().catch(() => [])
       ]);
 
       setAccounts(accs);
       setCategories(cats);
+      setCards(crds);
+      setGoals(gls);
 
       setAccountId(accs[0]?.id?.toString() || '');
       const initialCategories = cats.filter((cat: any) => cat.type === (type === 'CREDITO' ? 'INCOME' : 'EXPENSE'));
       setCategoryId(initialCategories[0]?.id?.toString() || cats[0]?.id?.toString() || '');
+
+      if (defaultCardId) {
+        setSelectedCardId(defaultCardId);
+        setPaymentMethod('CREDITO');
+      } else {
+        setSelectedCardId(crds[0]?.id?.toString() || '');
+      }
     } catch (err) {
       console.error('Erro ao carregar dados do formulário', err);
-      setError('Falha ao carregar contas e categorias. Verifique se o backend está rodando e se você está logado.');
+      setError('Falha ao carregar contas, categorias e cartões. Verifique se o backend está rodando e se você está logado.');
     } finally {
       setLoadingOptions(false);
     }
   };
 
-  const handleBlurAmount = () => {
-    const value = parseFloat(amount);
-    if (!isNaN(value)) {
-      setFormattedAmount(value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
-    } else {
-      setFormattedAmount('');
-    }
-  };
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    if (!description || !amount || !date || !accountId || !categoryId) {
+    if (!description || !date || !accountId || !categoryId) {
       setError('Todos os campos são obrigatórios.');
       setLoading(false);
       return;
     }
 
-    const numAmount = parseFloat(amount);
+    const numAmount = amount;
     if (numAmount <= 0) {
       setError('O valor deve ser maior que zero.');
       setLoading(false);
       return;
+    }
+
+    // Validate goal withdrawal
+    if (selectedGoalId && type === 'DEBITO') {
+      const linkedGoal = goals.find(g => g.id.toString() === selectedGoalId);
+      if (linkedGoal && numAmount > linkedGoal.currentAmount) {
+        setError(`O valor de retirada (${numAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}) não pode exceder o acumulado da meta (${linkedGoal.currentAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}).`);
+        setLoading(false);
+        return;
+      }
     }
 
     if (installments < 1 || installments > 48) {
@@ -217,18 +213,25 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
         categoriaId: parseInt(categoryId, 10),
         meioPagamento: actualPaymentMethod,
         cardId: actualPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null,
+        isRecurring: isRecurring,
+        dueDay: isRecurring ? dueDay : null,
+        recurrenceEndDate: isRecurring && recurrenceEndDate ? recurrenceEndDate : null,
+        goalId: selectedGoalId ? parseInt(selectedGoalId, 10) : null,
       });
 
       onSuccess();
       onClose();
       setDescription('');
-      setAmount('');
-      setFormattedAmount('');
+      setAmount(0);
       setDate(new Date().toISOString().split('T')[0]);
       setInstallments(1);
       setType('DEBITO');
       setPaymentMethod('PIX');
       setSelectedCardId('');
+      setSelectedGoalId('');
+      setIsRecurring(false);
+      setDueDay(new Date().getDate());
+      setRecurrenceEndDate('');
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar transação');
     } finally {
@@ -300,24 +303,13 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
 
             <div className="space-y-2">
               <label htmlFor="amount" className="text-sm font-medium text-slate-650 dark:text-slate-300">Valor Total</label>
-              <div className="relative">
-                <input
-                  id="amount"
-                  required
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={handleBlurAmount}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-slate-800 dark:text-white outline-none transition-colors focus:border-blue-500"
-                  placeholder="0,00"
-                />
-                {formattedAmount && (
-                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-550 dark:text-slate-550">
-                    {formattedAmount}
-                  </div>
-                )}
-              </div>
+              <CurrencyInput
+                id="amount"
+                value={amount}
+                onChange={(val) => setAmount(val)}
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-slate-800 dark:text-white outline-none transition-colors focus:border-blue-500"
+                placeholder="R$ 0,00"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -352,6 +344,54 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
                 />
               </div>
             </div>
+
+            {installments === 1 && (
+              <div className="space-y-3 p-4 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-55/50 dark:bg-white/5">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Marcar como gasto fixo recorrente
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-505 focus:ring-blue-500 w-4 h-4 accent-blue-500"
+                  />
+                </label>
+
+                {isRecurring && (
+                  <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-200 dark:border-white/5 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="space-y-2">
+                      <label htmlFor="dueDay" className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Dia do Vencimento
+                      </label>
+                      <input
+                        id="dueDay"
+                        required={isRecurring}
+                        type="number"
+                        min="1"
+                        max="31"
+                        value={dueDay}
+                        onChange={(e) => setDueDay(parseInt(e.target.value, 10))}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828] px-3 py-2 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="recurrenceEndDate" className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Data Fim (Opcional)
+                      </label>
+                      <input
+                        id="recurrenceEndDate"
+                        type="date"
+                        value={recurrenceEndDate}
+                        onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828] px-3 py-2 text-sm text-slate-850 dark:text-white outline-none [color-scheme:light] dark:[color-scheme:dark] focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <label htmlFor="account" className="flex items-center text-sm font-medium text-slate-650 dark:text-slate-300">
@@ -466,7 +506,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
                     >
                       <option value="Necessidades">Necessidades</option>
                       <option value="Desejos">Desejos</option>
-                      <option value="Prioridades financeiras">Prioridades financeiras</option>
+                      <option value="Reserva">Reserva</option>
                     </select>
                   </div>
 
@@ -588,6 +628,43 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
                 )}
               </div>
             </div>
+
+            {/* Goal Linking Field */}
+            {goals.length > 0 && (
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-medium text-slate-650 dark:text-slate-300">
+                  <Target className="mr-2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                  {type === 'CREDITO' ? 'Adicionar a uma meta? (opcional)' : 'Retirar de uma meta? (opcional)'}
+                </label>
+                <select
+                  value={selectedGoalId}
+                  onChange={(e) => setSelectedGoalId(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-slate-800 dark:text-white outline-none transition-colors focus:border-blue-500"
+                >
+                  <option value="">Nenhuma meta</option>
+                  {goals
+                    .filter(g => {
+                      if (type === 'CREDITO') return g.status !== 'COMPLETED';
+                      return g.currentAmount > 0;
+                    })
+                    .map(g => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} ({((g.currentAmount / g.targetAmount) * 100).toFixed(0)}% - {g.currentAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+                      </option>
+                    ))
+                  }
+                </select>
+                {selectedGoalId && type === 'DEBITO' && (() => {
+                  const goal = goals.find(g => g.id.toString() === selectedGoalId);
+                  if (!goal) return null;
+                  return (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Disponível para retirada: {goal.currentAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
           </form>
 
           <div className="border-t border-slate-100 dark:border-white/10 bg-white/90 dark:bg-[#081321]/90 p-6 backdrop-blur-xl">

@@ -197,3 +197,122 @@ export const transactionAPI = {
         return response;
     }
 };
+
+export const cardAPI = {
+    getCards: async () => {
+        const response = await fetch(`${API_URL}/cards`, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error('Erro ao carregar cartões');
+        }
+        return response.json();
+    },
+
+    createCard: async (cardData: { name: string; brand: string; limitAmount: number; closingDay: number; dueDay: number; colorTheme: string }) => {
+        const response = await fetch(`${API_URL}/cards`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cardData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao criar cartão');
+        }
+        return response.json();
+    },
+
+    updateCard: async (id: number, cardData: { name: string; brand: string; limitAmount: number; closingDay: number; dueDay: number; colorTheme: string }) => {
+        const response = await fetch(`${API_URL}/cards/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cardData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao atualizar cartão');
+        }
+        return response.json();
+    },
+
+    deleteCard: async (id: number) => {
+        const response = await fetch(`${API_URL}/cards/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao excluir cartão');
+        }
+        return response;
+    }
+};
+
+export const goalAPI = {
+    getGoals: async () => {
+        const response = await fetch(`${API_URL}/goals`, { credentials: 'include' });
+        if (!response.ok) throw new Error('Erro ao carregar metas');
+        return response.json();
+    },
+
+    createGoal: async (goalData: {
+        name: string;
+        targetAmount: number;
+        currentAmount: number;
+        type: string;
+        status?: string;
+        deadline: string;
+    }) => {
+        const response = await fetch(`${API_URL}/goals`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(goalData),
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Erro ao criar meta');
+        return response.json();
+    },
+
+    updateGoal: async (id: number, goalData: {
+        name: string;
+        targetAmount: number;
+        currentAmount: number;
+        type: string;
+        status?: string;
+        deadline: string;
+    }) => {
+        const response = await fetch(`${API_URL}/goals/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(goalData),
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Erro ao atualizar meta');
+        return response.json();
+    },
+
+    deleteGoal: async (id: number) => {
+        const response = await fetch(`${API_URL}/goals/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Erro ao excluir meta');
+        return response;
+    },
+
+    markAsCompleted: async (id: number) => {
+        const response = await fetch(`${API_URL}/goals/${id}/complete`, {
+            method: 'PATCH',
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Erro ao concluir meta');
+        return response.json();
+    },
+
+    getGoalTransactions: async (goalId: number) => {
+        const response = await fetch(`${API_URL}/goals/${goalId}/transactions`, { credentials: 'include' });
+        if (!response.ok) throw new Error('Erro ao carregar movimentações da meta');
+        return response.json();
+    },
+};

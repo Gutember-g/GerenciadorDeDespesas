@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 import { goalAPI } from '../services/api';
+import { CurrencyInput } from './CurrencyInput';
 
 interface Goal {
   id: number;
@@ -58,8 +59,8 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
 
   // Form State
   const [formName, setFormName] = useState('');
-  const [formTargetAmount, setFormTargetAmount] = useState('');
-  const [formCurrentAmount, setFormCurrentAmount] = useState('');
+  const [formTargetAmount, setFormTargetAmount] = useState<number>(0);
+  const [formCurrentAmount, setFormCurrentAmount] = useState<number>(0);
   const [formDeadline, setFormDeadline] = useState('');
   const [formType, setFormType] = useState<'EMERGENCY' | 'TRAVEL' | 'OTHER'>('EMERGENCY');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -85,8 +86,8 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
   const openCreateModal = () => {
     setModalMode('CREATE');
     setFormName('');
-    setFormTargetAmount('');
-    setFormCurrentAmount('0');
+    setFormTargetAmount(0);
+    setFormCurrentAmount(0);
     setFormDeadline(new Date().toISOString().split('T')[0]);
     setFormType('EMERGENCY');
     setErrorMessage(null);
@@ -97,8 +98,8 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
     setModalMode('EDIT');
     setSelectedGoal(goal);
     setFormName(goal.name);
-    setFormTargetAmount(goal.targetAmount.toString());
-    setFormCurrentAmount(goal.currentAmount.toString());
+    setFormTargetAmount(goal.targetAmount);
+    setFormCurrentAmount(goal.currentAmount);
     setFormDeadline(goal.deadline || new Date().toISOString().split('T')[0]);
     setFormType(goal.type);
     setErrorMessage(null);
@@ -128,12 +129,12 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formTargetAmount || !formDeadline) {
+    if (!formName.trim() || !formDeadline) {
       setErrorMessage('Todos os campos obrigatórios devem ser preenchidos.');
       return;
     }
-    const targetNum = parseFloat(formTargetAmount);
-    const currentNum = parseFloat(formCurrentAmount || '0');
+    const targetNum = formTargetAmount;
+    const currentNum = formCurrentAmount;
     if (isNaN(targetNum) || targetNum <= 0) {
       setErrorMessage('O valor alvo deve ser um número maior que zero.');
       return;
@@ -510,26 +511,19 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Valor Alvo (R$)</label>
-                  <input
-                    required
-                    type="number"
-                    step="0.01"
-                    min="0.01"
+                  <CurrencyInput
                     value={formTargetAmount}
-                    onChange={(e) => setFormTargetAmount(e.target.value)}
-                    placeholder="0.00"
+                    onChange={(val) => setFormTargetAmount(val)}
+                    placeholder="R$ 0,00"
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-655 dark:text-slate-300 mb-1">Valor Atual Salvo (R$)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <CurrencyInput
                     value={formCurrentAmount}
-                    onChange={(e) => setFormCurrentAmount(e.target.value)}
-                    placeholder="0.00"
+                    onChange={(val) => setFormCurrentAmount(val)}
+                    placeholder="R$ 0,00"
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>

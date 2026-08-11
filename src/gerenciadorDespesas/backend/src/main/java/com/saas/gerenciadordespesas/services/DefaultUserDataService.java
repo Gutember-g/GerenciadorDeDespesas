@@ -73,17 +73,17 @@ public class DefaultUserDataService {
             createCategory(user, "Compras por impulso", "EXPENSE", "Desejos", "#ef4444");
             createCategory(user, "Lazer", "EXPENSE", "Desejos", "#f59e0b");
 
-            // Prioridades financeiras (10 subcategorias)
-            createCategory(user, "Reserva de emergência", "EXPENSE", "Prioridades financeiras", "#eab308");
-            createCategory(user, "Quitação de dívidas", "EXPENSE", "Prioridades financeiras", "#ef4444");
-            createCategory(user, "Investimentos", "EXPENSE", "Prioridades financeiras", "#10b981");
-            createCategory(user, "Previdência", "EXPENSE", "Prioridades financeiras", "#10b981");
-            createCategory(user, "Entrada de imóvel", "EXPENSE", "Prioridades financeiras", "#3b82f6");
-            createCategory(user, "Compra de carro", "EXPENSE", "Prioridades financeiras", "#06b6d4");
-            createCategory(user, "Intercâmbio", "EXPENSE", "Prioridades financeiras", "#a855f7");
-            createCategory(user, "Viagem futura (meta)", "EXPENSE", "Prioridades financeiras", "#f43f5e");
-            createCategory(user, "Projeto pessoal", "EXPENSE", "Prioridades financeiras", "#6366f1");
-            createCategory(user, "Projeto profissional", "EXPENSE", "Prioridades financeiras", "#6366f1");
+            // Reserva (10 subcategorias)
+            createCategory(user, "Reserva de emergência", "EXPENSE", "Reserva", "#eab308");
+            createCategory(user, "Quitação de dívidas", "EXPENSE", "Reserva", "#ef4444");
+            createCategory(user, "Investimentos", "EXPENSE", "Reserva", "#10b981");
+            createCategory(user, "Previdência", "EXPENSE", "Reserva", "#10b981");
+            createCategory(user, "Entrada de imóvel", "EXPENSE", "Reserva", "#3b82f6");
+            createCategory(user, "Compra de carro", "EXPENSE", "Reserva", "#06b6d4");
+            createCategory(user, "Intercâmbio", "EXPENSE", "Reserva", "#a855f7");
+            createCategory(user, "Viagem futura (meta)", "EXPENSE", "Reserva", "#f43f5e");
+            createCategory(user, "Projeto pessoal", "EXPENSE", "Reserva", "#6366f1");
+            createCategory(user, "Projeto profissional", "EXPENSE", "Reserva", "#6366f1");
 
             // Receitas
             createCategory(user, "Salário", "INCOME", "Necessidades", "#22c55e");

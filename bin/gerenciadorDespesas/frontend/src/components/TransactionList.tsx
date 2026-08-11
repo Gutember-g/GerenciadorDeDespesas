@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Clock, Filter, Search, TrendingDown, TrendingUp, X, Edit2, Trash2, AlertCircle, Check, Calendar, CreditCard, Tag, ChevronDown, AlertTriangle } from 'lucide-react';
-import { transactionAPI, accountAPI, categoryAPI } from '../services/api';
+import { ChevronLeft, ChevronRight, Clock, Filter, Search, TrendingDown, TrendingUp, X, Edit2, Trash2, AlertCircle, Check, Calendar, CreditCard, Tag, ChevronDown, AlertTriangle, RefreshCw, FileDown, Printer } from 'lucide-react';
+import { transactionAPI, accountAPI, categoryAPI, cardAPI } from '../services/api';
 import { useMes } from '../contexts/MesContext';
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 
@@ -20,6 +20,19 @@ export function TransactionList({
   const [search, setSearch] = useState(globalSearch);
   const [debouncedSearch, setDebouncedSearch] = useState(globalSearch);
   const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+  const [filterCategory, setFilterCategory] = useState<string>('ALL');
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const cats = await categoryAPI.getCategories();
+        setCategories(cats);
+      } catch (err) {
+        console.error("Erro ao carregar categorias no TransactionList", err);
+      }
+    };
+    loadCategories();
+  }, []);
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -75,18 +88,18 @@ export function TransactionList({
     setIsEditModalOpen(true);
 
     try {
-      const storedCards = localStorage.getItem('financontrol_cards');
-      if (storedCards) {
-        setCards(JSON.parse(storedCards));
-      }
-
       if (accounts.length === 0 || categories.length === 0) {
-        const [accs, cats] = await Promise.all([
+        const [accs, cats, crds] = await Promise.all([
           accountAPI.getAccounts(),
-          categoryAPI.getCategories()
+          categoryAPI.getCategories(),
+          cardAPI.getCards()
         ]);
         setAccounts(accs);
         setCategories(cats);
+        setCards(crds);
+      } else {
+        const crds = await cardAPI.getCards();
+        setCards(crds);
       }
     } catch (err) {
       console.error("Erro ao carregar dados para edição", err);
@@ -162,7 +175,10 @@ export function TransactionList({
         categoriaId: parseInt(editCategoryId, 10),
         meioPagamento: editPaymentMethod,
         status: editStatus,
-        cardId: editPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null
+        cardId: editPaymentMethod === 'CREDITO' ? parseInt(selectedCardId, 10) : null,
+        isRecurring: editingTransaction.isRecurring || false,
+        dueDay: editingTransaction.dueDay || null,
+        recurrenceEndDate: editingTransaction.recurrenceEndDate || null
       };
 
       await transactionAPI.updateTransaction(editingTransaction.id, dto, editAllFuture);
@@ -209,7 +225,7 @@ export function TransactionList({
     let parent = cat.budgetRuleType || 'Necessidades';
     if (parent === 'ESSENTIAL') parent = 'Necessidades';
     if (parent === 'WANTS') parent = 'Desejos';
-    if (parent === 'SAVINGS') parent = 'Prioridades financeiras';
+    if (parent === 'SAVINGS' || parent === 'Prioridades financeiras') parent = 'Reserva';
     
     if (!groups[parent]) {
       groups[parent] = [];
@@ -274,9 +290,48 @@ export function TransactionList({
     });
   };
 
+  const handleExportCSV = () => {
+    try {
+      const headers = ['Data', 'Descrição', 'Categoria', 'Conta', 'Meio de Pagamento', 'Valor', 'Status'];
+      const rows = filteredTransactions.map(tx => [
+        new Date(tx.date).toLocaleDateString('pt-BR'),
+        `"${tx.description.replace(/"/g, '""')}"`,
+        tx.category?.name || 'Sem Categoria',
+        tx.account?.name || 'Sem Conta',
+        tx.paymentMethod || 'Débito',
+        (tx.type === 'INCOME' ? tx.amount : -tx.amount).toFixed(2),
+        tx.status === 'RECEIVED' ? 'Pago/Recebido' : 'Pendente'
+      ]);
+
+      const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `extrato_${formatMonth().replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao exportar CSV.', 'error');
+    }
+  };
+
+  const handleExportPDF = () => {
+    window.print();
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   const filteredTransactions = transactions.filter((tx) => {
-    if (filterType === 'ALL') return true;
-    return tx.type === filterType;
+    if (filterType !== 'ALL' && tx.type !== filterType) return false;
+    if (filterCategory !== 'ALL') {
+      if (!tx.category || tx.category.id.toString() !== filterCategory) return false;
+    }
+    return true;
   });
 
   const groupedTransactions = filteredTransactions.reduce((acc: any, tx: any) => {
@@ -302,6 +357,8 @@ export function TransactionList({
     return dayB - dayA;
   });
 
+  const categoryTotal = filteredTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+
   if (loading) {
     return (
       <div className="grid h-64 place-items-center">
@@ -312,7 +369,7 @@ export function TransactionList({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-4 shadow-sm dark:shadow-2xl dark:shadow-black/20 lg:flex-row lg:items-center">
+      <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-4 shadow-sm dark:shadow-2xl dark:shadow-black/20 lg:flex-row lg:items-center print:hidden">
         <div className="flex items-center space-x-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] p-1">
           <button
             onClick={prevMonth}
@@ -348,6 +405,21 @@ export function TransactionList({
           )}
         </div>
 
+        <div className="relative flex items-center min-w-[200px] w-full lg:w-auto">
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-55 dark:bg-[#07111f] py-2 px-3 text-sm text-slate-800 dark:text-slate-200 outline-none transition-all focus:border-blue-500/60 focus:ring-4 focus:ring-blue-500/10"
+          >
+            <option value="ALL">Todas as Categorias</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id.toString()}>
+                {cat.name} ({cat.type === 'INCOME' ? 'Entrada' : 'Saída'})
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="flex items-center space-x-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] p-1">
           {[
             ['ALL', 'Todos'],
@@ -373,9 +445,46 @@ export function TransactionList({
         </div>
       </div>
 
+      {filterCategory !== 'ALL' && (
+        <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-blue-500/5 dark:bg-blue-950/15 p-4 animate-in fade-in duration-200 print:border-none print:bg-transparent print:p-0 print:mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Total da Categoria no Período:</span>
+            <span className="rounded-lg px-2 py-0.5 text-xs font-bold text-white" style={{ backgroundColor: categories.find(c => c.id.toString() === filterCategory)?.color || '#3b82f6' }}>
+              {categories.find(c => c.id.toString() === filterCategory)?.name || 'Categoria'}
+            </span>
+          </div>
+          <span className="text-base font-extrabold text-blue-600 dark:text-blue-450">
+            {formatCurrency(categoryTotal)}
+          </span>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 shadow-sm dark:shadow-2xl dark:shadow-black/20">
-        <div className="border-b border-slate-200 dark:border-white/10 p-6 bg-slate-50/50 dark:bg-[#081321]/20">
+        <div className="border-b border-slate-200 dark:border-white/10 p-6 bg-slate-50/50 dark:bg-[#081321]/20 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
           <h3 className="text-xl font-semibold text-slate-800 dark:text-white">Extrato detalhado</h3>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+            >
+              <FileDown className="h-4 w-4 text-emerald-550" />
+              <span>Exportar CSV</span>
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+            >
+              <FileDown className="h-4 w-4 text-red-550" />
+              <span>Salvar PDF</span>
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+            >
+              <Printer className="h-4 w-4 text-blue-550" />
+              <span>Imprimir</span>
+            </button>
+          </div>
         </div>
 
         {filteredTransactions.length === 0 ? (
@@ -387,11 +496,12 @@ export function TransactionList({
             <p className="mx-auto max-w-xs text-slate-500 dark:text-slate-400 text-sm">
               Tente ajustar os filtros ou busque por outro termo para encontrar o que procura.
             </p>
-            {(search || filterType !== 'ALL') && (
+            {(search || filterType !== 'ALL' || filterCategory !== 'ALL') && (
               <button
                 onClick={() => {
                   setSearch('');
                   setFilterType('ALL');
+                  setFilterCategory('ALL');
                 }}
                 className="mt-6 text-sm font-semibold text-blue-500 dark:text-blue-400 transition-colors hover:text-blue-600 dark:hover:text-blue-300"
               >
@@ -449,6 +559,11 @@ export function TransactionList({
                               {tx.meioPagamento && (
                                 <span className="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-300">
                                   {tx.meioPagamento}
+                                </span>
+                              )}
+                              {tx.isRecurring && (
+                                <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-300 flex items-center gap-1" title="Gasto Fixo Recorrente">
+                                  <RefreshCw className="h-2.5 w-2.5" /> Fixo
                                 </span>
                               )}
                               <span className="text-[10px] text-slate-400 dark:text-slate-500">ID: #{tx.id}</span>
@@ -545,6 +660,40 @@ export function TransactionList({
                       <div>
                         <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Esta e todas as futuras</p>
                         <p className="text-[10px] text-slate-400">Remove esta parcela e todas as subsequentes desta compra</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              ) : deletingTransaction.isRecurring && deletingTransaction.recurringGroupId ? (
+                <div className="w-full space-y-4 my-4">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Esta transação faz parte de um gasto fixo recorrente. Como deseja prosseguir?
+                  </p>
+                  <div className="flex flex-col gap-2 text-left">
+                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 p-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                      <input 
+                        type="radio" 
+                        name="deleteOption" 
+                        checked={!deleteFutureOption}
+                        onChange={() => setDeleteFutureOption(false)}
+                        className="text-red-500 focus:ring-red-500 focus:ring-offset-0"
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Apenas este mês</p>
+                        <p className="text-[10px] text-slate-400">Exclui apenas o registro do mês correspondente</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-55 dark:bg-white/5 p-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                      <input 
+                        type="radio" 
+                        name="deleteOption" 
+                        checked={deleteFutureOption}
+                        onChange={() => setDeleteFutureOption(true)}
+                        className="text-red-500 focus:ring-red-500 focus:ring-offset-0"
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Este e todos os futuros</p>
+                        <p className="text-[10px] text-slate-400">Remove este lançamento e todos os subsequentes deste gasto fixo</p>
                       </div>
                     </label>
                   </div>
@@ -839,7 +988,8 @@ export function TransactionList({
               </div>
 
               {/* Recurrence Option (editAllFuture) */}
-              {editingTransaction.isInstallment && editingTransaction.installmentGroupId && (
+              {((editingTransaction.isInstallment && editingTransaction.installmentGroupId) ||
+                (editingTransaction.isRecurring && editingTransaction.recurringGroupId)) && (
                 <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 dark:bg-blue-955/15 space-y-2">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
@@ -849,9 +999,11 @@ export function TransactionList({
                       className="mt-0.5 rounded border-slate-300 dark:border-white/10 bg-white dark:bg-[#07111f] text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
                     />
                     <div>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Alterar parcelas futuras?</span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Alterar lançamentos futuros?</span>
                       <span className="text-[10px] text-slate-400 block mt-0.5">
-                        Se marcado, as alterações serão aplicadas a esta parcela (Parcela {editingTransaction.currentInstallment}) e a todas as futuras.
+                        {editingTransaction.isInstallment 
+                          ? `Se marcado, as alterações serão aplicadas a esta parcela (Parcela ${editingTransaction.currentInstallment}) e a todas as futuras.`
+                          : `Se marcado, as alterações serão aplicadas a este lançamento e a todos os futuros.`}
                       </span>
                     </div>
                   </label>

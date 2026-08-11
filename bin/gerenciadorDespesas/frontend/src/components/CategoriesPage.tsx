@@ -63,7 +63,7 @@ interface Category {
   id: number;
   name: string;
   type: 'INCOME' | 'EXPENSE';
-  budgetRuleType: string; // "Necessidades", "Desejos", "Prioridades financeiras"
+  budgetRuleType: string; // "Necessidades", "Desejos", "Reserva"
   color: string;
   iconName?: string;
 }
@@ -148,7 +148,7 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
     if (!rule) return 'Necessidades';
     if (rule.toUpperCase() === 'ESSENTIAL' || rule === 'Necessidades') return 'Necessidades';
     if (rule.toUpperCase() === 'WANTS' || rule === 'Desejos') return 'Desejos';
-    if (rule.toUpperCase() === 'SAVINGS' || rule === 'Prioridades financeiras') return 'Prioridades financeiras';
+    if (rule.toUpperCase() === 'SAVINGS' || rule === 'Reserva' || rule === 'Prioridades financeiras') return 'Reserva';
     return rule;
   };
 
@@ -456,7 +456,7 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
                     >
                       <option value="Necessidades">Necessidades</option>
                       <option value="Desejos">Desejos</option>
-                      <option value="Prioridades financeiras">Prioridades financeiras</option>
+                      <option value="Reserva">Reserva</option>
                     </select>
                   </div>
                 )}

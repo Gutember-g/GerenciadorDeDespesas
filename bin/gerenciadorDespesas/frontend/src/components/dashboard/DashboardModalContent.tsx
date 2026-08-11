@@ -1,14 +1,17 @@
+import { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useAuthSettings } from '../../contexts/AuthSettingsContext.tsx';
 import { calcularFaturaAtual } from '../../utils/cardInvoiceUtils';
+import { cardAPI } from '../../services/api';
 
 interface DashboardModalContentProps {
-  type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | null;
+  type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | 'todas-categorias' | 'metas-502030' | null;
   payload: any;
   dashboardData: any;
   transactions: any[];
   onNavigate?: (tab: 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings') => void;
   onClose: () => void;
+  onChangeType?: (type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | 'todas-categorias' | 'metas-502030' | null, payload: any) => void;
 }
 
 export const DashboardModalContent = ({
@@ -17,9 +20,19 @@ export const DashboardModalContent = ({
   dashboardData: data,
   transactions,
   onNavigate,
-  onClose
+  onClose,
+  onChangeType
 }: DashboardModalContentProps) => {
   const { formatCurrency } = useAuthSettings();
+  const [cards, setCards] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (type === 'fatura') {
+      cardAPI.getCards()
+        .then(setCards)
+        .catch(err => console.error("Erro ao carregar cartões no dashboard", err));
+    }
+  }, [type]);
 
   if (!type || !data) return null;
 
@@ -241,11 +254,7 @@ export const DashboardModalContent = ({
     }
 
     case 'fatura': {
-      const storedCards = localStorage.getItem('financontrol_cards');
-      let cardList: any[] = [];
-      if (storedCards) {
-        cardList = JSON.parse(storedCards);
-      }
+      const cardList = cards;
 
       let nextCardDue = null;
       if (cardList.length > 0) {
@@ -656,7 +665,313 @@ export const DashboardModalContent = ({
       );
     }
 
+    case 'todas-categorias': {
+      const categoriesList = payload || [];
+      const colors = ['#ff3d57', '#4f67ff', '#8b5cf6', '#22c55e', '#facc15', '#06b6d4'];
+
+      return (
+        <div className="space-y-4">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Todas as Categorias</p>
+          <div className="border border-slate-200/60 dark:border-white/5 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-white/5 max-h-[60vh] overflow-y-auto">
+            {categoriesList.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-6">Nenhuma categoria encontrada.</p>
+            ) : (
+              categoriesList.map((cat: any, index: number) => {
+                const percent = data.totalDespesas > 0 ? (cat.valor / data.totalDespesas) * 100 : 0;
+                return (
+                  <div 
+                    key={`${cat.nome}-${index}`} 
+                    onClick={() => {
+                      onChangeType?.('categoria', { name: cat.nome });
+                    }}
+                    className="p-3 hover:bg-slate-50 dark:hover:bg-white/2 cursor-pointer transition-colors space-y-1.5"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="h-3 w-3 shrink-0 rounded-full"
+                          style={{ backgroundColor: colors[index % colors.length] || '#cbd5e1' }}
+                        />
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{cat.nome}</span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                          {formatCurrency(cat.valor)}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">{percent.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                    <div className="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full" 
+                        style={{ 
+                          width: `${Math.min(percent, 100)}%`,
+                          backgroundColor: colors[index % colors.length] || '#cbd5e1'
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    case 'metas-502030':
+      return (
+        <Metas502030Content
+          data={data}
+          transactions={transactions}
+          onClose={onClose}
+          onNavigate={onNavigate}
+          formatCurrency={formatCurrency}
+        />
+      );
+
     default:
       return null;
   }
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Sub-component for the 50/30/20 goals modal (needs own useState)
+────────────────────────────────────────────────────────────────────────── */
+interface Metas502030ContentProps {
+  data: any;
+  transactions: any[];
+  onClose: () => void;
+  onNavigate?: (tab: 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings') => void;
+  formatCurrency: (val: number) => string;
+}
+
+const Metas502030Content = ({ data, transactions, onClose, onNavigate, formatCurrency }: Metas502030ContentProps) => {
+  const tabs = [
+    {
+      key: 'necessidades' as const,
+      label: 'Necessidades',
+      meta: 50,
+      color: '#22c55e',
+      data: data.necessidades,
+      tip: 'Moradia, alimentação, transporte e contas fixas essenciais.'
+    },
+    {
+      key: 'desejos' as const,
+      label: 'Desejos',
+      meta: 30,
+      color: '#4f67ff',
+      data: data.desejos,
+      tip: 'Lazer, viagens, assinaturas e compras não essenciais.'
+    },
+    {
+      key: 'reserva' as const,
+      label: 'Reserva',
+      meta: 20,
+      color: '#facc15',
+      data: data.reserva,
+      tip: 'Investimentos, poupança e aportes financeiros planejados.'
+    },
+    {
+      key: 'emergencia' as const,
+      label: 'Emergência',
+      meta: null,
+      color: '#f97316',
+      data: null,
+      tip: 'Reserva para imprevistos. Meta recomendada: 6x os gastos mensais.'
+    },
+  ];
+
+  const [activeTab, setActiveTab] = useState<'necessidades' | 'desejos' | 'reserva' | 'emergencia'>('necessidades');
+  const active = tabs.find(t => t.key === activeTab)!;
+
+  const reserveTx = transactions.filter(t =>
+    t.categoria === 'Reserva' ||
+    t.parentCategory === 'Reserva' ||
+    t.category?.budgetRuleType === 'SAVINGS' ||
+    t.category?.budgetRuleType === 'RESERVA'
+  );
+
+  const tabTx = activeTab === 'emergencia'
+    ? transactions.filter(t => t.category?.name?.toLowerCase().includes('emerg'))
+    : transactions.filter(t => {
+        const bt = (t.category?.budgetRuleType || '').toUpperCase();
+        if (activeTab === 'necessidades') return bt === 'ESSENTIAL' || bt === 'NECESSIDADES';
+        if (activeTab === 'desejos') return bt === 'WANTS' || bt === 'DESEJOS';
+        if (activeTab === 'reserva') return bt === 'SAVINGS' || bt === 'RESERVA' || bt === 'PRIORIDADES FINANCEIRAS' || bt === 'PRIORIDADES_FINANCEIRAS';
+        return false;
+      });
+
+  return (
+    <div className="space-y-5">
+      {/* Abas de navegação */}
+      <div className="flex gap-1 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] p-1">
+        {tabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition-all duration-200 ${
+              activeTab === tab.key
+                ? 'text-white shadow-md'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+            }`}
+            style={activeTab === tab.key ? { backgroundColor: tab.color } : {}}
+          >
+            {tab.label}
+            {tab.meta !== null && <span className="ml-1 opacity-75">({tab.meta}%)</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Conteúdo da aba ativa */}
+      {activeTab !== 'emergencia' && active.data ? (
+        <div className="space-y-5 animate-in fade-in duration-200">
+          {/* Resumo numérico */}
+          <div
+            className="rounded-xl border p-4 space-y-3"
+            style={{ borderColor: `${active.color}40`, backgroundColor: `${active.color}08` }}
+          >
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500 dark:text-slate-400">Gasto no mês</span>
+              <span className="font-extrabold" style={{ color: active.color }}>
+                {formatCurrency(active.data.valorGasto)}
+              </span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500 dark:text-slate-400">Meta ({active.meta}% da renda)</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                {formatCurrency((data.totalReceitas * (active.meta! / 100)))}
+              </span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500 dark:text-slate-400">Percentual real utilizado</span>
+              <span className={`font-bold ${
+                activeTab === 'reserva'
+                  ? active.data.percentualReal >= active.meta! ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                  : active.data.percentualReal <= active.meta! ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+              }`}>
+                {active.data.percentualReal.toFixed(1)}%
+              </span>
+            </div>
+
+            {/* Barra de progresso */}
+            <div className="space-y-1">
+              <div className="h-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min((active.data.percentualReal / active.meta!) * 100, 100)}%`,
+                    backgroundColor: active.color,
+                    boxShadow: `0 0 8px ${active.color}66`
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-400">
+                <span>0%</span>
+                <span>Meta: {active.meta}%</span>
+                <span>Usado: {active.data.percentualReal.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Dica contextual */}
+          <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
+            <strong>{active.label}:</strong> {active.tip}
+          </div>
+
+          {/* Subcategorias */}
+          {active.data.categorias && active.data.categorias.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Gastos por Subcategoria</p>
+              <div className="rounded-xl border border-slate-200/60 dark:border-white/5 overflow-hidden divide-y divide-slate-100 dark:divide-white/5">
+                {active.data.categorias.map((cat: any) => (
+                  <div key={cat.nome} className="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-white/2">
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{cat.nome}</span>
+                    <span className="text-xs font-bold text-slate-800 dark:text-white">{formatCurrency(cat.valor)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Transações do grupo */}
+          {tabTx.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Lançamentos do Grupo</p>
+              <div className="rounded-xl border border-slate-200/60 dark:border-white/5 overflow-hidden divide-y divide-slate-100 dark:divide-white/5 max-h-48 overflow-y-auto">
+                {tabTx.slice(0, 10).map((tx: any) => (
+                  <div key={tx.id} className="flex justify-between items-center p-3 hover:bg-slate-50 dark:hover:bg-white/2">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px]">{tx.description}</p>
+                      <span className="text-[10px] text-slate-400">{new Date(tx.date).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <span className="text-xs font-bold text-red-600 dark:text-red-400">{formatCurrency(tx.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'emergencia' ? (
+        /* Aba Emergência */
+        <div className="space-y-5 animate-in fade-in duration-200">
+          <div className="rounded-xl border border-orange-500/30 bg-orange-500/5 p-4 space-y-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-500 dark:text-slate-400">Saldo Acumulado</span>
+              <span className="text-lg font-extrabold text-orange-500">{formatCurrency(data.emergencyAcumulado)}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500 dark:text-slate-400">Meta Recomendada (6x gastos)</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">{formatCurrency(data.emergencyMeta)}</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500 dark:text-slate-400">Falta para completar</span>
+              <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(data.emergencyFalta)}</span>
+            </div>
+            <div className="space-y-1">
+              <div className="h-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-400 transition-all duration-500"
+                  style={{ width: `${Math.min(data.emergencyPercentual, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-400">
+                <span>Progresso</span>
+                <span>{data.emergencyPercentual.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-3 text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
+            {active.tip}
+          </div>
+
+          {/* Histórico de aportes */}
+          {reserveTx.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Aportes Recentes</p>
+              <div className="rounded-xl border border-slate-200/60 dark:border-white/5 overflow-hidden divide-y divide-slate-100 dark:divide-white/5">
+                {reserveTx.slice(0, 5).map((tx: any) => (
+                  <div key={tx.id} className="flex justify-between items-center p-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{tx.description}</p>
+                      <span className="text-[10px] text-slate-400">{new Date(tx.date).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <span className="text-xs font-bold text-orange-500">{formatCurrency(tx.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => { onClose(); onNavigate?.('goals'); }}
+            className="w-full rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 py-3 text-xs font-bold transition text-center block"
+          >
+            Gerenciar Reserva de Emergência
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 };

@@ -17,6 +17,7 @@ import {
   WalletCards,
   Sun,
   Loader2,
+  X,
 } from 'lucide-react';
 import { TransactionForm } from './components/TransactionForm';
 import { TransactionList } from './components/TransactionList';
@@ -27,11 +28,12 @@ import { CategoriesPage } from './components/CategoriesPage';
 import { GoalsPage } from './components/GoalsPage';
 import { CardsPage } from './components/CardsPage';
 import { SettingsPage } from './components/SettingsPage';
+import { ProfilePage } from './components/ProfilePage';
 import { MesProvider } from './contexts/MesContext';
-import { categoryAPI, transactionAPI } from './services/api';
+import { categoryAPI, transactionAPI, cardAPI } from './services/api';
 import { useAuthSettings } from './contexts/AuthSettingsContext.tsx';
 
-type ActiveTab = 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings';
+type ActiveTab = 'dashboard' | 'transactions' | 'reports' | 'categories' | 'goals' | 'cards' | 'settings' | 'profile';
 
 const navItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
@@ -40,12 +42,14 @@ const navItems = [
   { id: 'categories' as const, label: 'Categorias', icon: WalletCards },
   { id: 'goals' as const, label: 'Metas', icon: Target },
   { id: 'cards' as const, label: 'Cartões', icon: CreditCard },
+  { id: 'profile' as const, label: 'Meu Perfil', icon: User },
   { id: 'settings' as const, label: 'Configurações', icon: Settings },
 ];
 
 function App() {
   const { user, theme, currency, notifications: userNotifications, logout, updateUserPreferences, loading } = useAuthSettings();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [defaultCardIdForTransaction, setDefaultCardIdForTransaction] = useState<string | undefined>(undefined);
@@ -127,8 +131,12 @@ function App() {
 
   // Dynamic Notifications Generator
   const generateDynamicNotifications = async () => {
-    const storedCards = localStorage.getItem('financontrol_cards');
-    const cardsList = storedCards ? JSON.parse(storedCards) : [];
+    let cardsList: any[] = [];
+    try {
+      cardsList = await cardAPI.getCards();
+    } catch (err) {
+      console.error("Erro ao carregar cartões para notificações", err);
+    }
     
     const storedGoals = localStorage.getItem('financontrol_goals');
     const goalsList = storedGoals ? JSON.parse(storedGoals) : [];
@@ -316,6 +324,86 @@ function App() {
         />
 
         <div className="relative flex min-h-screen">
+          {/* MOBILE SIDEBAR DRAWER */}
+          {isSidebarOpen && (
+            <div 
+              onClick={() => setIsSidebarOpen(false)}
+              className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden transition-opacity duration-300"
+            />
+          )}
+
+          <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321] p-6 transition-transform duration-300 lg:hidden ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}>
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 text-white font-bold text-lg shadow-lg">
+                  <ChartNoAxesColumnIncreasing className="h-5 w-5" />
+                </div>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Finan<span className="text-blue-500">Control</span>
+                </h1>
+              </div>
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Mobile Search input */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+              <input
+                className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#07111f] pl-11 pr-4 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-blue-500"
+                placeholder="Buscar transações, metas..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 space-y-2">
+              <nav className="space-y-2">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setSearchInput('');
+                        setSearchQuery('');
+                        setIsSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/20'
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-red-650 dark:hover:text-red-300"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Sair</span>
+              </button>
+            </div>
+          </aside>
+
+          {/* DESKTOP SIDEBAR */}
           <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321]/90 px-5 py-6 backdrop-blur-xl">
             <div className="mb-10 flex items-center gap-3 px-1">
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg shadow-blue-500/25">
@@ -326,46 +414,53 @@ function App() {
               </h1>
             </div>
 
-            <nav className="flex-1 space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 space-y-2">
+              <nav className="space-y-2">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setSearchInput('');
-                      setSearchQuery('');
-                    }}
-                    className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/20'
-                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setSearchInput('');
+                        setSearchQuery('');
+                      }}
+                      className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                        isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/20'
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
 
-            <button
-              onClick={handleLogout}
-              className="mt-5 flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-red-600 dark:hover:text-red-300"
-            >
-              <LogOut className="h-5 w-5" />
-              <span>Sair</span>
-            </button>
+            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-red-650 dark:hover:text-red-300"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>Sair</span>
+              </button>
+            </div>
           </aside>
 
           <main className="flex-1 pb-24 lg:pb-10">
             <div className="sticky top-0 z-30 border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-[#07111f]/80 px-4 py-4 backdrop-blur-xl md:px-8 lg:px-10">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 lg:hidden">
-                  <button className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300">
+                  <button 
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                  >
                     <Menu className="h-5 w-5" />
                   </button>
                   <h1 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -481,7 +576,7 @@ function App() {
                 <div className="ml-auto flex items-center gap-3">
                   <button 
                     onClick={() => updateUserPreferences(theme === 'dark' ? 'light' : 'dark', currency, userNotifications)}
-                    className="hidden h-11 w-11 place-items-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white md:grid"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white"
                   >
                     {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                   </button>
@@ -493,7 +588,7 @@ function App() {
                         setIsNotificationOpen(!isNotificationOpen);
                         setIsUserMenuOpen(false);
                       }}
-                      className="relative hidden h-11 w-11 place-items-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white md:grid"
+                      className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-300 transition hover:text-black dark:hover:text-white"
                     >
                       <Bell className="h-5 w-5" />
                       {unreadCount > 0 && (
@@ -568,7 +663,7 @@ function App() {
                       <div className="absolute right-0 mt-2 z-55 w-48 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-[#0f1a2a] p-2 shadow-2xl animate-in fade-in duration-200">
                         <button
                           onClick={() => {
-                            setActiveTab('settings');
+                            setActiveTab('profile');
                             setIsUserMenuOpen(false);
                           }}
                           className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -631,11 +726,14 @@ function App() {
               ) : activeTab === 'cards' ? (
                 <CardsPage 
                   searchQuery={searchQuery} 
+                  refreshTrigger={refreshTrigger}
                   onAddTransactionClick={(cardId) => {
                     setDefaultCardIdForTransaction(cardId.toString());
                     setIsFormOpen(true);
                   }}
                 />
+              ) : activeTab === 'profile' ? (
+                <ProfilePage />
               ) : (
                 <SettingsPage />
               )}
@@ -645,9 +743,9 @@ function App() {
 
         <button
           onClick={() => setIsFormOpen(true)}
-          className="fixed bottom-8 left-1/2 z-40 grid h-16 w-16 -translate-x-1/2 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 text-white shadow-2xl shadow-blue-600/40 lg:hidden"
+          className="fixed bottom-24 right-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-600/40 lg:hidden hover:scale-105 active:scale-95 transition-all"
         >
-          <Plus className="h-7 w-7" />
+          <Plus className="h-6 w-6" />
         </button>
 
         <div className="fixed bottom-0 left-0 z-30 grid w-full grid-cols-5 border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#081321]/95 px-4 pb-3 pt-2 backdrop-blur-xl lg:hidden">
@@ -680,8 +778,8 @@ function App() {
             <span>Metas</span>
           </button>
           <button 
-            onClick={() => setActiveTab('settings')}
-            className={`flex flex-col items-center gap-1 text-[11px] ${activeTab === 'settings' ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}
+            onClick={() => setActiveTab('profile')}
+            className={`flex flex-col items-center gap-1 text-[11px] ${activeTab === 'profile' ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}
           >
             <User className="h-5 w-5" />
             <span>Perfil</span>

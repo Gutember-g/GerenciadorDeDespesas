@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { dashboardAPI, transactionAPI } from '../services/api';
 import { useMes } from '../contexts/MesContext';
@@ -11,6 +11,27 @@ import { ComprasParceladas } from './dashboard/ComprasParceladas';
 import { EmergencyFund } from './dashboard/EmergencyFund';
 import { DashboardModal } from './DashboardModal';
 import { DashboardModalContent } from './dashboard/DashboardModalContent';
+
+/** Skeleton de card — exibido durante carregamento */
+const CardSkeleton = () => (
+  <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm animate-pulse">
+    <div className="h-3 w-1/3 rounded-full bg-slate-200 dark:bg-white/10 mb-4" />
+    <div className="h-6 w-2/3 rounded-full bg-slate-200 dark:bg-white/10 mb-2" />
+    <div className="h-3 w-1/2 rounded-full bg-slate-200 dark:bg-white/10" />
+  </div>
+);
+
+const SectionSkeleton = ({ rows = 3 }: { rows?: number }) => (
+  <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm animate-pulse space-y-3">
+    <div className="h-3 w-1/4 rounded-full bg-slate-200 dark:bg-white/10" />
+    {Array.from({ length: rows }).map((_, i) => (
+      <div key={i} className="space-y-1.5">
+        <div className="h-3 w-full rounded-full bg-slate-200 dark:bg-white/10" />
+        <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-white/10 opacity-50" />
+      </div>
+    ))}
+  </div>
+);
 
 interface DashboardProps {
   refreshTrigger?: number;
@@ -29,7 +50,7 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
   // Dashboard Detail Modal States
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
-    type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | 'todas-categorias' | null;
+    type: 'renda' | 'gastos' | 'fatura' | 'reserva' | 'grafico-mes' | 'categoria' | 'todas-categorias' | 'metas-502030' | null;
     payload: any;
   }>({
     isOpen: false,
@@ -99,9 +120,28 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
 
   if (loading && !data) {
     return (
-      <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
-        <p className="text-slate-500 dark:text-slate-400">Carregando suas finanças...</p>
+      <div className="space-y-5 animate-in fade-in duration-300">
+        <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="h-8 w-48 rounded-full bg-slate-200 dark:bg-white/10 animate-pulse mb-2" />
+            <div className="h-4 w-64 rounded-full bg-slate-200 dark:bg-white/5 animate-pulse" />
+          </div>
+        </section>
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          {[0,1,2,3].map(i => <CardSkeleton key={i} />)}
+        </div>
+        <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.5fr_1fr]">
+          <SectionSkeleton rows={4} />
+          <SectionSkeleton rows={5} />
+        </section>
+        <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">
+          <SectionSkeleton rows={3} />
+          <SectionSkeleton rows={4} />
+        </section>
+        <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">
+          <SectionSkeleton rows={3} />
+          <SectionSkeleton rows={3} />
+        </section>
       </div>
     );
   }
@@ -122,11 +162,11 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
     );
   }
 
-  const allCategories = [
+  const allCategories = useMemo(() => [
     ...(data.necessidades.categorias || []),
     ...(data.desejos.categorias || []),
     ...(data.reserva.categorias || []),
-  ].sort((a, b) => b.valor - a.valor);
+  ].sort((a, b) => b.valor - a.valor), [data]);
 
   const getMonthName = (month: number) => {
     const date = new Date(2000, month - 1, 1);
@@ -217,7 +257,12 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
       </section>
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">
-        <Regra502030 necessidades={data.necessidades} desejos={data.desejos} reserva={data.reserva} />
+        <Regra502030
+          necessidades={data.necessidades}
+          desejos={data.desejos}
+          reserva={data.reserva}
+          onClick={() => setModalState({ isOpen: true, type: 'metas-502030', payload: null })}
+        />
         <EmergencyFund
           meta={data.emergencyMeta}
           acumulado={data.emergencyAcumulado}
@@ -238,6 +283,7 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
           modalState.type === 'gastos' ? `Gastos totais — ${formatMonth()}` :
           modalState.type === 'fatura' ? `Fatura prevista — ${formatMonth()}` :
           modalState.type === 'reserva' ? 'Reserva de emergência' :
+          modalState.type === 'metas-502030' ? 'Metas Financeiras — 50/30/20' :
           modalState.type === 'grafico-mes' ? `Gastos em ${formatMonth()}` :
           modalState.type === 'categoria' ? `${modalState.payload?.name || 'Categoria'} — ${formatMonth()}` :
           modalState.type === 'todas-categorias' ? `Gastos por Categoria — ${formatMonth()}` :

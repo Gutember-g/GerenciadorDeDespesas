@@ -126,9 +126,10 @@ public class Transaction {
             case "DESEJOS":
                 return "Desejos";
             case "SAVINGS":
+            case "RESERVA":
             case "PRIORIDADES FINANCEIRAS":
             case "PRIORIDADES_FINANCEIRAS":
-                return "Prioridades financeiras";
+                return "Reserva";
             default:
                 return "Necessidades";
         }

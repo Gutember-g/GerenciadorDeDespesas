@@ -48,11 +48,7 @@ public class DashboardService {
 
         List<Transaction> allTransactions = transactionRepository.findByUserId(userId);
         
-        List<Transaction> monthTransactions = allTransactions.stream()
-                .filter(t -> t.getDate() != null &&
-                             t.getDate().getMonthValue() == targetMonth &&
-                             t.getDate().getYear() == targetYear)
-                .collect(Collectors.toList());
+        List<Transaction> monthTransactions = transactionRepository.findByUserIdAndMonthYear(userId, targetMonth, targetYear);
 
         Double totalReceitas = monthTransactions.stream()
                 .filter(t -> "INCOME".equalsIgnoreCase(t.getType()))
@@ -108,7 +104,7 @@ public class DashboardService {
         Double totalPrioridades = monthTransactions.stream()
                 .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
                              t.getCategory() != null &&
-                             "Prioridades financeiras".equalsIgnoreCase(getPortugueseParentCategory(t.getCategory().getBudgetRuleType())))
+                             "Reserva".equalsIgnoreCase(getPortugueseParentCategory(t.getCategory().getBudgetRuleType())))
                 .mapToDouble(Transaction::getAmount)
                 .sum();
         Double emergencyAporteMensal = totalPrioridades > 0 ? totalPrioridades : 500.0; // padrão
@@ -196,9 +192,10 @@ public class DashboardService {
             case "DESEJOS":
                 return "Desejos";
             case "SAVINGS":
+            case "RESERVA":
             case "PRIORIDADES FINANCEIRAS":
             case "PRIORIDADES_FINANCEIRAS":
-                return "Prioridades financeiras";
+                return "Reserva";
             default:
                 return "Necessidades";
         }
@@ -239,6 +236,7 @@ public class DashboardService {
             case "DESEJOS":
                 return "WANTS";
             case "SAVINGS":
+            case "RESERVA":
             case "PRIORIDADES FINANCEIRAS":
             case "PRIORIDADES_FINANCEIRAS":
                 return "SAVINGS";

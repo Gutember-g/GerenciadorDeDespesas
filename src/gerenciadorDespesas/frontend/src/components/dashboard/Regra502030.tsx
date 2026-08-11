@@ -11,9 +11,10 @@ interface Regra502030Props {
   necessidades: RuleData;
   desejos: RuleData;
   reserva: RuleData;
+  onClick?: () => void;
 }
 
-export const Regra502030 = ({ necessidades, desejos, reserva }: Regra502030Props) => {
+export const Regra502030 = ({ necessidades, desejos, reserva, onClick }: Regra502030Props) => {
   const { formatCurrency } = useAuthSettings();
   const goals = [
     {
@@ -40,7 +41,10 @@ export const Regra502030 = ({ necessidades, desejos, reserva }: Regra502030Props
   ];
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20">
+    <div
+      className={`rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0d1828]/80 p-5 shadow-sm dark:shadow-2xl dark:shadow-black/20 transition-all duration-200 ${onClick ? 'cursor-pointer hover:border-indigo-500/50 hover:shadow-indigo-500/10 hover:shadow-lg' : ''}`}
+      onClick={onClick}
+    >
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Metas financeiras</h3>
         <span className="rounded-lg bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">50-30-20</span>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle, Calendar, CreditCard, Layers, Tag, X, Plus, ChevronDown, Check, Search, Target } from 'lucide-react';
 import { accountAPI, categoryAPI, transactionAPI, cardAPI, goalAPI } from '../services/api';
+import { CurrencyInput } from './CurrencyInput';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -11,8 +12,7 @@ interface TransactionFormProps {
 
 export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: TransactionFormProps) {
   const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [formattedAmount, setFormattedAmount] = useState('');
+  const [amount, setAmount] = useState(0);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [accountId, setAccountId] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -69,7 +69,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
     let parent = cat.budgetRuleType || 'Necessidades';
     if (parent === 'ESSENTIAL') parent = 'Necessidades';
     if (parent === 'WANTS') parent = 'Desejos';
-    if (parent === 'SAVINGS') parent = 'Prioridades financeiras';
+    if (parent === 'SAVINGS' || parent === 'Prioridades financeiras') parent = 'Reserva';
     
     if (!groups[parent]) {
       groups[parent] = [];
@@ -155,27 +155,21 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
     }
   };
 
-  const handleBlurAmount = () => {
-    const value = parseFloat(amount);
-    if (!isNaN(value)) {
-      setFormattedAmount(value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
-    } else {
-      setFormattedAmount('');
-    }
-  };
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    if (!description || !amount || !date || !accountId || !categoryId) {
+    if (!description || !date || !accountId || !categoryId) {
       setError('Todos os campos são obrigatórios.');
       setLoading(false);
       return;
     }
 
-    const numAmount = parseFloat(amount);
+    const numAmount = amount;
     if (numAmount <= 0) {
       setError('O valor deve ser maior que zero.');
       setLoading(false);
@@ -228,8 +222,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
       onSuccess();
       onClose();
       setDescription('');
-      setAmount('');
-      setFormattedAmount('');
+      setAmount(0);
       setDate(new Date().toISOString().split('T')[0]);
       setInstallments(1);
       setType('DEBITO');
@@ -310,24 +303,13 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
 
             <div className="space-y-2">
               <label htmlFor="amount" className="text-sm font-medium text-slate-650 dark:text-slate-300">Valor Total</label>
-              <div className="relative">
-                <input
-                  id="amount"
-                  required
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  onBlur={handleBlurAmount}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-slate-800 dark:text-white outline-none transition-colors focus:border-blue-500"
-                  placeholder="0,00"
-                />
-                {formattedAmount && (
-                  <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-550 dark:text-slate-550">
-                    {formattedAmount}
-                  </div>
-                )}
-              </div>
+              <CurrencyInput
+                id="amount"
+                value={amount}
+                onChange={(val) => setAmount(val)}
+                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-slate-800 dark:text-white outline-none transition-colors focus:border-blue-500"
+                placeholder="R$ 0,00"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -524,7 +506,7 @@ export function TransactionForm({ isOpen, onClose, onSuccess, defaultCardId }: T
                     >
                       <option value="Necessidades">Necessidades</option>
                       <option value="Desejos">Desejos</option>
-                      <option value="Prioridades financeiras">Prioridades financeiras</option>
+                      <option value="Reserva">Reserva</option>
                     </select>
                   </div>
 

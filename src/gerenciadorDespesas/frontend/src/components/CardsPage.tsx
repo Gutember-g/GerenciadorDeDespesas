@@ -12,6 +12,7 @@ import {
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
 import { transactionAPI, cardAPI } from '../services/api';
 import { calcularFaturaPorCartao } from '../utils/cardInvoiceUtils';
+import { CurrencyInput } from './CurrencyInput';
 
 interface CreditCard {
   id: number;
@@ -82,7 +83,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick, refreshTrigger }
   // Form State
   const [formName, setFormName] = useState('');
   const [formBrand, setFormBrand] = useState<'Visa' | 'Mastercard' | 'Elo' | 'Amex'>('Visa');
-  const [formLimitAmount, setFormLimitAmount] = useState('');
+  const [formLimitAmount, setFormLimitAmount] = useState<number>(0);
   // formCurrentInvoice removido — fatura agora é calculada automaticamente
   const [formClosingDay, setFormClosingDay] = useState('');
   const [formDueDay, setFormDueDay] = useState('');
@@ -139,7 +140,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick, refreshTrigger }
     setModalMode('CREATE');
     setFormName('');
     setFormBrand('Visa');
-    setFormLimitAmount('');
+    setFormLimitAmount(0);
 
     setFormClosingDay('5');
     setFormDueDay('12');
@@ -153,7 +154,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick, refreshTrigger }
     setSelectedCard(card);
     setFormName(card.name);
     setFormBrand(card.brand);
-    setFormLimitAmount(card.limitAmount.toString());
+    setFormLimitAmount(card.limitAmount);
 
     setFormClosingDay(card.closingDay.toString());
     setFormDueDay(card.dueDay.toString());
@@ -170,12 +171,12 @@ export function CardsPage({ searchQuery, onAddTransactionClick, refreshTrigger }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formLimitAmount || !formClosingDay || !formDueDay) {
+    if (!formName.trim() || !formClosingDay || !formDueDay) {
       setErrorMessage('Todos os campos obrigatórios devem ser preenchidos.');
       return;
     }
 
-    const limitNum = parseFloat(formLimitAmount);
+    const limitNum = formLimitAmount;
     const closingNum = parseInt(formClosingDay, 10);
     const dueNum = parseInt(formDueDay, 10);
 
@@ -472,14 +473,10 @@ export function CardsPage({ searchQuery, onAddTransactionClick, refreshTrigger }
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Limite Total (R$)</label>
-                  <input
-                    required
-                    type="number"
-                    step="0.01"
-                    min="0.01"
+                  <CurrencyInput
                     value={formLimitAmount}
-                    onChange={(e) => setFormLimitAmount(e.target.value)}
-                    placeholder="0.00"
+                    onChange={(val) => setFormLimitAmount(val)}
+                    placeholder="R$ 0,00"
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>

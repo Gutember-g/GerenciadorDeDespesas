@@ -41,4 +41,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             String recurringGroupId, LocalDate date);
 
     List<Transaction> findByGoalIdOrderByDateDesc(Long goalId);
+
+    @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId " +
+           "AND FUNCTION('MONTH', t.date) = :month " +
+           "AND FUNCTION('YEAR', t.date) = :year " +
+           "ORDER BY t.date DESC")
+    List<Transaction> findByUserIdAndMonthYear(
+            @Param("userId") Long userId,
+            @Param("month") int month,
+            @Param("year") int year);
 }

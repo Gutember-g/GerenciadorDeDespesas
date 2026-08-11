@@ -10,8 +10,9 @@ import {
   PlusCircle
 } from 'lucide-react';
 import { useAuthSettings } from '../contexts/AuthSettingsContext.tsx';
-import { transactionAPI } from '../services/api';
+import { transactionAPI, cardAPI } from '../services/api';
 import { calcularFaturaPorCartao } from '../utils/cardInvoiceUtils';
+import { CurrencyInput } from './CurrencyInput';
 
 interface CreditCard {
   id: number;
@@ -24,42 +25,15 @@ interface CreditCard {
   colorTheme: 'purple' | 'gold' | 'black' | 'orange' | 'blue';
 }
 
-const initialMockCards: CreditCard[] = [
-  {
-    id: 1,
-    name: 'Nubank Ultravioleta',
-    brand: 'Mastercard',
-    limitAmount: 15000,
-    closingDay: 5,
-    dueDay: 12,
-    colorTheme: 'purple'
-  },
-  {
-    id: 2,
-    name: 'XP Visa Infinite',
-    brand: 'Visa',
-    limitAmount: 30000,
-    closingDay: 10,
-    dueDay: 17,
-    colorTheme: 'gold'
-  },
-  {
-    id: 3,
-    name: 'Banco Inter',
-    brand: 'Mastercard',
-    limitAmount: 10000,
-    closingDay: 25,
-    dueDay: 2,
-    colorTheme: 'orange'
-  }
-];
+// initialMockCards removido — cartões agora são carregados do banco pelo DataSeeder
 
 interface CardsPageProps {
   searchQuery: string;
   onAddTransactionClick?: (cardId: number) => void;
+  refreshTrigger?: number;
 }
 
-export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps) {
+export function CardsPage({ searchQuery, onAddTransactionClick, refreshTrigger }: CardsPageProps) {
   const { formatCurrency } = useAuthSettings();
   const [cards, setCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,23 +83,23 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
   // Form State
   const [formName, setFormName] = useState('');
   const [formBrand, setFormBrand] = useState<'Visa' | 'Mastercard' | 'Elo' | 'Amex'>('Visa');
-  const [formLimitAmount, setFormLimitAmount] = useState('');
+  const [formLimitAmount, setFormLimitAmount] = useState<number>(0);
   // formCurrentInvoice removido — fatura agora é calculada automaticamente
   const [formClosingDay, setFormClosingDay] = useState('');
   const [formDueDay, setFormDueDay] = useState('');
   const [formColorTheme, setFormColorTheme] = useState<'purple' | 'gold' | 'black' | 'orange' | 'blue'>('purple');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const loadCards = () => {
-    setLoading(true);
-    const stored = localStorage.getItem('financontrol_cards');
-    if (stored) {
-      setCards(JSON.parse(stored));
-    } else {
-      localStorage.setItem('financontrol_cards', JSON.stringify(initialMockCards));
-      setCards(initialMockCards);
+  const loadCards = async () => {
+    try {
+      setLoading(true);
+      const data = await cardAPI.getCards();
+      setCards(data);
+    } catch (err) {
+      console.error("Erro ao carregar cartões da API", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // State para transações globais de crédito (usadas no cálculo de fatura)
@@ -154,7 +128,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
   useEffect(() => {
     loadCards();
     fetchAllCreditTransactions();
-  }, []);
+  }, [refreshTrigger]);
 
   // Cálculo reativo das faturas de todos os cartões
   const faturasMap = useMemo(() => {
@@ -162,16 +136,11 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     return calcularFaturaPorCartao(cards, allCreditTransactions);
   }, [cards, allCreditTransactions]);
 
-  const saveCardsList = (updatedCards: CreditCard[]) => {
-    localStorage.setItem('financontrol_cards', JSON.stringify(updatedCards));
-    setCards(updatedCards);
-  };
-
   const openCreateModal = () => {
     setModalMode('CREATE');
     setFormName('');
     setFormBrand('Visa');
-    setFormLimitAmount('');
+    setFormLimitAmount(0);
 
     setFormClosingDay('5');
     setFormDueDay('12');
@@ -185,7 +154,7 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     setSelectedCard(card);
     setFormName(card.name);
     setFormBrand(card.brand);
-    setFormLimitAmount(card.limitAmount.toString());
+    setFormLimitAmount(card.limitAmount);
 
     setFormClosingDay(card.closingDay.toString());
     setFormDueDay(card.dueDay.toString());
@@ -200,15 +169,14 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formLimitAmount || !formClosingDay || !formDueDay) {
+    if (!formName.trim() || !formClosingDay || !formDueDay) {
       setErrorMessage('Todos os campos obrigatórios devem ser preenchidos.');
       return;
     }
 
-    const limitNum = parseFloat(formLimitAmount);
-
+    const limitNum = formLimitAmount;
     const closingNum = parseInt(formClosingDay, 10);
     const dueNum = parseInt(formDueDay, 10);
 
@@ -226,9 +194,8 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
       return;
     }
 
-    if (modalMode === 'CREATE') {
-      const newCard: CreditCard = {
-        id: Date.now(),
+    try {
+      const cardData = {
         name: formName,
         brand: formBrand,
         limitAmount: limitNum,
@@ -236,33 +203,29 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
         dueDay: dueNum,
         colorTheme: formColorTheme
       };
-      saveCardsList([...cards, newCard]);
-    } else if (modalMode === 'EDIT' && selectedCard) {
-      const updated = cards.map(c => {
-        if (c.id === selectedCard.id) {
-          return {
-            ...c,
-            name: formName,
-            brand: formBrand,
-            limitAmount: limitNum,
-            closingDay: closingNum,
-            dueDay: dueNum,
-            colorTheme: formColorTheme
-          };
-        }
-        return c;
-      });
-      saveCardsList(updated);
-    }
 
-    setIsModalOpen(false);
+      if (modalMode === 'CREATE') {
+        await cardAPI.createCard(cardData);
+      } else if (modalMode === 'EDIT' && selectedCard) {
+        await cardAPI.updateCard(selectedCard.id, cardData);
+      }
+
+      await loadCards();
+      setIsModalOpen(false);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Erro ao salvar cartão.');
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedCard) return;
-    const filtered = cards.filter(c => c.id !== selectedCard.id);
-    saveCardsList(filtered);
-    setIsModalOpen(false);
+    try {
+      await cardAPI.deleteCard(selectedCard.id);
+      await loadCards();
+      setIsModalOpen(false);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Erro ao excluir cartão.');
+    }
   };
 
   const filteredCards = cards.filter(c =>
@@ -510,14 +473,10 @@ export function CardsPage({ searchQuery, onAddTransactionClick }: CardsPageProps
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Limite Total (R$)</label>
-                  <input
-                    required
-                    type="number"
-                    step="0.01"
-                    min="0.01"
+                  <CurrencyInput
                     value={formLimitAmount}
-                    onChange={(e) => setFormLimitAmount(e.target.value)}
-                    placeholder="0.00"
+                    onChange={(val) => setFormLimitAmount(val)}
+                    placeholder="R$ 0,00"
                     className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#0d1828] px-4 py-3 text-sm text-slate-800 dark:text-white outline-none focus:border-blue-500"
                   />
                 </div>

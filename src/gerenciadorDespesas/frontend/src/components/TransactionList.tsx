@@ -225,7 +225,7 @@ export function TransactionList({
     let parent = cat.budgetRuleType || 'Necessidades';
     if (parent === 'ESSENTIAL') parent = 'Necessidades';
     if (parent === 'WANTS') parent = 'Desejos';
-    if (parent === 'SAVINGS') parent = 'Prioridades financeiras';
+    if (parent === 'SAVINGS' || parent === 'Prioridades financeiras') parent = 'Reserva';
     
     if (!groups[parent]) {
       groups[parent] = [];

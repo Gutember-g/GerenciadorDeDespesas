@@ -25,15 +25,23 @@ ChartJS.register(
 );
 
 interface DespesasBarChartProps {
-  totalReceitas: number;
-  necessidades: { valorGasto: number; percentualMeta: number };
-  desejos: { valorGasto: number; percentualMeta: number };
-  reserva: { valorGasto: number; percentualMeta: number };
   theme?: 'light' | 'dark';
+  currentMonthName: string;
+  prevMonthName: string;
+  currentData: {
+    necessidades: number;
+    desejos: number;
+    reserva: number;
+  };
+  prevData: {
+    necessidades: number;
+    desejos: number;
+    reserva: number;
+  };
   onChartClick?: () => void;
 }
 
-export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva, theme = 'dark', onChartClick }: DespesasBarChartProps) => {
+export const DespesasBarChart = ({ currentMonthName, prevMonthName, currentData, prevData, theme = 'dark', onChartClick }: DespesasBarChartProps) => {
   const isDark = theme === 'dark';
 
   const options = {
@@ -51,7 +59,13 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
     },
     plugins: {
       legend: {
-        display: false,
+        display: true,
+        position: 'top' as const,
+        labels: {
+          color: isDark ? '#94a3b8' : '#64748b',
+          boxWidth: 12,
+          padding: 10,
+        }
       },
       tooltip: {
         callbacks: {
@@ -109,27 +123,22 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
   };
 
   const labels = ['Necessidades', 'Desejos', 'Reserva'];
-  const metaNecessidades = (necessidades.percentualMeta / 100) * totalReceitas;
-  const metaDesejos = (desejos.percentualMeta / 100) * totalReceitas;
-  const metaReserva = (reserva.percentualMeta / 100) * totalReceitas;
 
   const data = {
     labels,
     datasets: [
       {
-        label: 'Gasto real',
-        data: [necessidades.valorGasto, desejos.valorGasto, reserva.valorGasto],
-        backgroundColor: ['#378ADD', '#EF9F27', '#22C55E'],
-        borderRadius: 8,
+        label: currentMonthName,
+        data: [currentData.necessidades, currentData.desejos, currentData.reserva],
+        backgroundColor: '#3b82f6',
+        borderRadius: 6,
         borderSkipped: false,
       },
       {
-        label: 'Meta',
-        data: [metaNecessidades, metaDesejos, metaReserva],
-        backgroundColor: ['rgba(55, 138, 221, 0.22)', 'rgba(239, 159, 39, 0.22)', 'rgba(34, 197, 94, 0.22)'],
-        borderColor: ['#378ADD', '#EF9F27', '#22C55E'],
-        borderWidth: 1,
-        borderRadius: 8,
+        label: prevMonthName,
+        data: [prevData.necessidades, prevData.desejos, prevData.reserva],
+        backgroundColor: isDark ? '#475569' : '#cbd5e1',
+        borderRadius: 6,
         borderSkipped: false,
       },
     ],
@@ -143,21 +152,11 @@ export const DespesasBarChart = ({ totalReceitas, necessidades, desejos, reserva
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Comparativo de gastos</h3>
         <span className="rounded-lg bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-          Mês atual
+          Mês atual x Mês anterior
         </span>
       </div>
       <div className="h-72">
         <Bar options={options} data={data} />
-      </div>
-      <div className="mt-5 flex justify-center gap-6 text-xs text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded bg-blue-500" />
-          <span>Gasto real</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded border border-dashed border-blue-400 dark:border-blue-300 bg-blue-500/20" />
-          <span>Meta</span>
-        </div>
       </div>
     </div>
   );

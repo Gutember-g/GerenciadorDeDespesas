@@ -42,7 +42,7 @@ export function Reports({ refreshTrigger }: { refreshTrigger?: number }) {
     const groups: { [key: string]: { total: number; color: string; subs: { [key: string]: SubCategoryGroup } } } = {
       'Necessidades': { total: 0, color: '#22c55e', subs: {} },
       'Desejos': { total: 0, color: '#3b82f6', subs: {} },
-      'Prioridades financeiras': { total: 0, color: '#eab308', subs: {} }
+      'Reserva': { total: 0, color: '#eab308', subs: {} }
     };
 
     expenses.forEach((tx) => {
