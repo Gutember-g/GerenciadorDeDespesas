@@ -111,6 +111,15 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
     fetchSummary();
   }, [mesAtivo, refreshTrigger]);
 
+  const allCategories = useMemo(() => {
+    if (!data) return [];
+    return [
+      ...(data.necessidades?.categorias || []),
+      ...(data.desejos?.categorias || []),
+      ...(data.reserva?.categorias || []),
+    ].sort((a: any, b: any) => b.valor - a.valor);
+  }, [data]);
+
   const formatMonth = () => {
     return new Date(mesAtivo.year, mesAtivo.month - 1).toLocaleString('pt-BR', {
       month: 'long',
@@ -162,11 +171,7 @@ export const Dashboard = ({ refreshTrigger, userName, theme = 'dark', onNavigate
     );
   }
 
-  const allCategories = useMemo(() => [
-    ...(data.necessidades.categorias || []),
-    ...(data.desejos.categorias || []),
-    ...(data.reserva.categorias || []),
-  ].sort((a, b) => b.valor - a.valor), [data]);
+
 
   const getMonthName = (month: number) => {
     const date = new Date(2000, month - 1, 1);
