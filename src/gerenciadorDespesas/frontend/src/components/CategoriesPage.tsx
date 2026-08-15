@@ -212,13 +212,14 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
             name: formName,
             type: formType,
             budgetRuleType: formBudgetRule,
-            color: formColor
+            color: formColor,
+            iconName: formIcon
           });
         } catch (apiErr) {
           console.warn('Falha na API ao criar categoria. Criando apenas localmente.', apiErr);
         }
 
-        // Store locally if API fails or to save custom properties like iconName
+        // Store locally if API fails
         const localCreated = JSON.parse(localStorage.getItem('financontrol_created_categories') || '[]');
         const newId = newCatBackend?.id || Date.now();
         const newCategoryItem: Category = {
@@ -234,17 +235,26 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
           localCreated.push(newCategoryItem);
           localStorage.setItem('financontrol_created_categories', JSON.stringify(localCreated));
         } else {
-          // If created on backend, save its custom fields to localEdited
           const localEdited = JSON.parse(localStorage.getItem('financontrol_edited_categories') || '[]');
           localEdited.push({ id: newId, iconName: formIcon });
           localStorage.setItem('financontrol_edited_categories', JSON.stringify(localEdited));
         }
 
       } else if (modalMode === 'EDIT' && selectedCategory) {
-        // Save edit locally since backend doesn't have PUT endpoint
+        // Save edit via API and update local storage as fallback
+        try {
+          await categoryAPI.updateCategory(selectedCategory.id, {
+            name: formName,
+            type: formType,
+            budgetRuleType: formBudgetRule,
+            color: formColor,
+            iconName: formIcon
+          });
+        } catch (apiErr) {
+          console.warn('Falha na API ao atualizar categoria. Salvando localmente.', apiErr);
+        }
+
         const localEdited = JSON.parse(localStorage.getItem('financontrol_edited_categories') || '[]');
-        
-        // Remove existing edit if present
         const filtered = localEdited.filter((e: any) => e.id !== selectedCategory.id);
         filtered.push({
           id: selectedCategory.id,
@@ -266,17 +276,21 @@ export function CategoriesPage({ searchQuery }: CategoriesPageProps) {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedCategory) return;
     
-    // Save deletion locally since backend doesn't have DELETE endpoint
+    try {
+      await categoryAPI.deleteCategory(selectedCategory.id);
+    } catch (apiErr) {
+      console.warn('Falha na API ao excluir categoria. Excluindo localmente.', apiErr);
+    }
+
     const localDeleted = JSON.parse(localStorage.getItem('financontrol_deleted_categories') || '[]');
     if (!localDeleted.includes(selectedCategory.id)) {
       localDeleted.push(selectedCategory.id);
       localStorage.setItem('financontrol_deleted_categories', JSON.stringify(localDeleted));
     }
 
-    // Clean from local created lists if it was a local category
     const localCreated = JSON.parse(localStorage.getItem('financontrol_created_categories') || '[]');
     const filteredCreated = localCreated.filter((c: any) => c.id !== selectedCategory.id);
     localStorage.setItem('financontrol_created_categories', JSON.stringify(filteredCreated));

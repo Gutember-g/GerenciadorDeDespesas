@@ -5,6 +5,7 @@ public class CategoryRequestDTO {
     private String type; // INCOME, EXPENSE
     private String budgetRuleType; // Necessidades, Desejos, Prioridades financeiras
     private String color;
+    private String iconName;
 
     public CategoryRequestDTO() {
     }
@@ -39,5 +40,13 @@ public class CategoryRequestDTO {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public String getIconName() {
+        return iconName;
+    }
+
+    public void setIconName(String iconName) {
+        this.iconName = iconName;
     }
 }

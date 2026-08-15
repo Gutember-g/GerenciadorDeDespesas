@@ -99,13 +99,10 @@ public class Transaction {
     }
 
     public String getCategoria() {
-        if (this.parentCategory != null) {
-            return this.parentCategory;
-        }
-        if (this.category != null) {
+        if (this.category != null && this.category.getBudgetRuleType() != null) {
             return mapToPortugueseParentCategory(this.category.getBudgetRuleType());
         }
-        return null;
+        return this.parentCategory;
     }
 
     public Double getValor() {

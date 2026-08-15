@@ -25,8 +25,26 @@ export function TransactionList({
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const cats = await categoryAPI.getCategories();
-        setCategories(cats);
+        const backendCats = await categoryAPI.getCategories();
+        const localDeleted = JSON.parse(localStorage.getItem('financontrol_deleted_categories') || '[]');
+        const localEdited = JSON.parse(localStorage.getItem('financontrol_edited_categories') || '[]');
+        const localCreated = JSON.parse(localStorage.getItem('financontrol_created_categories') || '[]');
+
+        let list = backendCats.map((cat: any) => ({
+          ...cat,
+          budgetRuleType: cat.budgetRuleType || 'Necessidades',
+          color: cat.color || '#3b82f6'
+        }));
+
+        list = list.map((cat: any) => {
+          const edit = localEdited.find((e: any) => e.id === cat.id);
+          return edit ? { ...cat, ...edit } : cat;
+        });
+
+        list = [...list, ...localCreated];
+        list = list.filter((cat: any) => !localDeleted.includes(cat.id));
+
+        setCategories(list);
       } catch (err) {
         console.error("Erro ao carregar categorias no TransactionList", err);
       }
@@ -527,33 +545,56 @@ export function TransactionList({
                     const dateObj = new Date(y, m - 1, d);
                     const isFuture = new Date() < dateObj;
 
+                    // Dynamic category lookup to solve Bugs 2 & 3
+                    const categoryId = tx.category?.id || tx.categoryId;
+                    const dynamicCat = categoryId ? categories.find((c: any) => c.id.toString() === categoryId.toString()) : null;
+                    
+                    const catName = dynamicCat?.name || tx.category?.name || tx.subcategoria || null;
+                    const catColor = dynamicCat?.color || tx.category?.color || '#3b82f6';
+                    
+                    const rawBudgetRule = dynamicCat?.budgetRuleType || tx.categoria || tx.parentCategory;
+                    const formatBudgetRule = (rule: string) => {
+                      if (!rule) return null;
+                      const u = rule.toUpperCase();
+                      if (u === 'ESSENTIAL' || u === 'NECESSIDADES') return 'Necessidades';
+                      if (u === 'WANTS' || u === 'DESEJOS') return 'Desejos';
+                      if (u === 'SAVINGS' || u === 'RESERVA' || u.includes('PRIORIDAD')) return 'Reserva';
+                      return rule;
+                    };
+                    const parentTag = formatBudgetRule(rawBudgetRule);
+
                     return (
-                      <div key={tx.id} className="group flex items-center justify-between px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-white/5">
-                        <div className="flex min-w-0 items-center gap-4">
-                          <div className={`rounded-lg p-2 ${isIncome ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'} transition-transform group-hover:scale-110`}>
-                            {isIncome ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                      <div key={tx.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:px-6 py-3 sm:py-4 gap-3 sm:gap-4 transition-colors hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/5 last:border-0">
+                        {/* Top / Left Section: Icon + Description + Badges */}
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          <div className={`shrink-0 rounded-lg p-2 sm:p-2.5 ${isIncome ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'} transition-transform group-hover:scale-105 mt-0.5 sm:mt-0`}>
+                            {isIncome ? <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" /> : <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5" />}
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{tx.description}</p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-medium text-xs sm:text-sm text-slate-800 dark:text-slate-200 break-words">{tx.description}</p>
                               {isFuture && (
-                                <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-300">
+                                <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-300 shrink-0">
                                   <Clock className="mr-1 h-3 w-3" /> Futura
                                 </span>
                               )}
                             </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-2">
-                              {tx.category && (
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                              {catName ? (
                                 <span
                                   className="rounded px-1.5 py-0.5 text-[10px] font-medium"
-                                  style={{ backgroundColor: `${tx.category.color}18`, color: tx.category.color }}
+                                  style={{ backgroundColor: `${catColor}18`, color: catColor }}
                                 >
-                                  {tx.category.name}
+                                  {catName}
+                                </span>
+                              ) : (
+                                <span className="rounded bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                                  Sem Categoria
                                 </span>
                               )}
-                              {(tx.categoria || tx.parentCategory) && (
+                              {parentTag && (
                                 <span className="rounded bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                                  {tx.categoria || tx.parentCategory}
+                                  {parentTag}
                                 </span>
                               )}
                               {tx.meioPagamento && (
@@ -570,9 +611,11 @@ export function TransactionList({
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 pl-4 shrink-0">
-                          <div className="text-right">
-                            <p className={`text-sm font-bold ${isIncome ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+
+                        {/* Bottom / Right Section: Amount + Status + Action Buttons */}
+                        <div className="flex items-center justify-between sm:justify-end gap-3 pl-0 sm:pl-4 pt-2 sm:pt-0 border-t border-slate-100 dark:border-white/5 sm:border-0 shrink-0 w-full sm:w-auto">
+                          <div className="text-left sm:text-right">
+                            <p className={`text-xs sm:text-sm font-bold ${isIncome ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                               {isIncome ? '+' : '-'} {formatCurrency(tx.amount)}
                             </p>
                             <p className={`mt-0.5 text-[10px] ${tx.status === 'PENDING' ? 'text-amber-500 dark:text-amber-405 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
@@ -580,8 +623,8 @@ export function TransactionList({
                             </p>
                           </div>
                           
-                          {/* Botões de Ação discretos */}
-                          <div className="flex items-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                          {/* Botões de Ação */}
+                          <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
                             <button
                               onClick={() => handleStartEdit(tx)}
                               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"

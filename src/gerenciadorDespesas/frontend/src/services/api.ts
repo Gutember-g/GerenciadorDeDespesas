@@ -113,7 +113,7 @@ export const categoryAPI = {
         return response.json();
     },
 
-    createCategory: async (categoryData: { name: string; type: string; budgetRuleType: string; color: string }) => {
+    createCategory: async (categoryData: { name: string; type: string; budgetRuleType: string; color: string; iconName?: string }) => {
         const response = await fetch(`${API_URL}/categories`, {
             method: 'POST',
             headers: {
@@ -126,6 +126,32 @@ export const categoryAPI = {
             throw new Error('Erro ao criar subcategoria');
         }
         return response.json();
+    },
+
+    updateCategory: async (id: number, categoryData: { name?: string; type?: string; budgetRuleType?: string; color?: string; iconName?: string }) => {
+        const response = await fetch(`${API_URL}/categories/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(categoryData),
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao atualizar categoria');
+        }
+        return response.json();
+    },
+
+    deleteCategory: async (id: number) => {
+        const response = await fetch(`${API_URL}/categories/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao excluir categoria');
+        }
+        return response;
     }
 };
 
