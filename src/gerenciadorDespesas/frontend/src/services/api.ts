@@ -26,7 +26,7 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
-export const refreshAccessToken = async (): Promise<string> => {
+export const refreshAccessToken = async (): Promise<{ accessToken: string; token: string; nome?: string; email?: string }> => {
     const response = await fetch(`${API_URL}/auth/refresh`, {
         method: 'POST',
         headers: {
@@ -48,7 +48,7 @@ export const refreshAccessToken = async (): Promise<string> => {
     }
 
     setAccessToken(newAccessToken);
-    return newAccessToken;
+    return data;
 };
 
 export const authFetch = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
@@ -84,7 +84,8 @@ export const authFetch = async (input: RequestInfo | URL, init: RequestInit = {}
         isRefreshing = true;
 
         try {
-            const newToken = await refreshAccessToken();
+            const data = await refreshAccessToken();
+            const newToken = data.accessToken || data.token;
             processQueue(null, newToken);
             return await makeRequest(newToken);
         } catch (error) {

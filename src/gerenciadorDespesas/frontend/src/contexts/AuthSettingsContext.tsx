@@ -39,25 +39,52 @@ export function AuthSettingsProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const checkSession = async () => {
       setLoading(true);
-      const savedUser = localStorage.getItem('financontrol_user');
-      if (savedUser) {
-        try {
-          const parsedUser = JSON.parse(savedUser) as UserProfile;
-          setUser(parsedUser);
-          loadPreferencesForUser(parsedUser.email);
+      try {
+        // Tenta silenciosamente restaurar a sessão via cookie HttpOnly de Refresh Token
+        const data = await authAPI.refreshToken();
+        
+        let savedUserObj: UserProfile | null = null;
+        const savedUserStr = localStorage.getItem('financontrol_user');
+        if (savedUserStr) {
           try {
-            await authAPI.refreshToken();
+            savedUserObj = JSON.parse(savedUserStr);
           } catch (e) {
-            console.error('Failed to restore session via refresh token', e);
-            setUser(null);
-            localStorage.removeItem('financontrol_user');
+            console.error('Failed to parse saved user', e);
           }
-        } catch (e) {
-          console.error('Failed to parse saved session', e);
-          localStorage.removeItem('financontrol_user');
         }
+
+        const email = data.email || savedUserObj?.email || '';
+        const nome = data.nome || savedUserObj?.nome || 'Usuário';
+
+        const savedConfigStr = localStorage.getItem(`financontrol_config_${email}`);
+        let avatarColor = savedUserObj?.avatarColor || 'from-amber-200 to-orange-500';
+        if (savedConfigStr) {
+          try {
+            const parsed = JSON.parse(savedConfigStr);
+            if (parsed.avatarColor) avatarColor = parsed.avatarColor;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        const userProfile: UserProfile = {
+          nome,
+          email,
+          avatarColor
+        };
+
+        setUser(userProfile);
+        localStorage.setItem('financontrol_user', JSON.stringify(userProfile));
+        if (email) {
+          loadPreferencesForUser(email);
+        }
+      } catch (e) {
+        console.log('Nenhuma sessão ativa via Refresh Token:', e);
+        setUser(null);
+        localStorage.removeItem('financontrol_user');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     checkSession();
   }, []);
