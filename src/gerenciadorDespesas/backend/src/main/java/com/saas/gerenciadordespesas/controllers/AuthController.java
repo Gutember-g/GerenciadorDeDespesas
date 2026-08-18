@@ -160,7 +160,7 @@ public class AuthController {
                     .secure(cookieSecure)
                     .path("/api/auth/refresh")
                     .maxAge(0)
-                    .sameSite("Strict")
+                    .sameSite(cookieSameSite)
                     .build();
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -190,7 +190,7 @@ public class AuthController {
                 .secure(cookieSecure)
                 .path("/api/auth/refresh")
                 .maxAge(0)
-                .sameSite("Strict")
+                .sameSite(cookieSameSite)
                 .build();
 
         return ResponseEntity.ok()
@@ -215,7 +215,7 @@ public class AuthController {
                 .secure(cookieSecure)
                 .path("/api/auth/refresh")
                 .maxAge(Duration.ofDays(7))
-                .sameSite("Strict")
+                .sameSite(cookieSameSite)
                 .build();
     }
 
