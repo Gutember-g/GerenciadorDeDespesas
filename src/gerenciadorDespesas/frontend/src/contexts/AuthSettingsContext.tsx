@@ -45,6 +45,13 @@ export function AuthSettingsProvider({ children }: { children: React.ReactNode }
           const parsedUser = JSON.parse(savedUser) as UserProfile;
           setUser(parsedUser);
           loadPreferencesForUser(parsedUser.email);
+          try {
+            await authAPI.refreshToken();
+          } catch (e) {
+            console.error('Failed to restore session via refresh token', e);
+            setUser(null);
+            localStorage.removeItem('financontrol_user');
+          }
         } catch (e) {
           console.error('Failed to parse saved session', e);
           localStorage.removeItem('financontrol_user');

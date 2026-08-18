@@ -19,9 +19,16 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private final String secret;
+    private final String issuer;
+    private final String audience;
 
-    public JwtUtil(@Value("${jwt.secret}") String secret) {
+    public JwtUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.issuer:gerenciador-despesas-api}") String issuer,
+            @Value("${jwt.audience:gerenciador-despesas-web}") String audience) {
         this.secret = secret;
+        this.issuer = issuer;
+        this.audience = audience;
     }
 
     private SecretKey getSigningKey() {
@@ -44,6 +51,8 @@ public class JwtUtil {
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
+                .requireIssuer(issuer)
+                .requireAudience(audience)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -62,14 +71,20 @@ public class JwtUtil {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
+                .setIssuer(issuer)
+                .setAudience(audience)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 8)) // 8 hours
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15)) // 15 minutos
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public Boolean isTokenValid(String token, UserDetails userDetails) {
-        final String email = extractEmail(token);
-        return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        try {
+            final String email = extractEmail(token);
+            return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
