@@ -722,7 +722,7 @@ function App() {
               ) : activeTab === 'categories' ? (
                 <CategoriesPage searchQuery={searchQuery} />
               ) : activeTab === 'goals' ? (
-                <GoalsPage searchQuery={searchQuery} />
+                <GoalsPage searchQuery={searchQuery} onRefresh={triggerRefresh} />
               ) : activeTab === 'cards' ? (
                 <CardsPage 
                   searchQuery={searchQuery} 

@@ -38,9 +38,10 @@ interface GoalTransaction {
 
 interface GoalsPageProps {
   searchQuery: string;
+  onRefresh?: () => void;
 }
 
-export function GoalsPage({ searchQuery }: GoalsPageProps) {
+export function GoalsPage({ searchQuery, onRefresh }: GoalsPageProps) {
   const { formatCurrency } = useAuthSettings();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,8 +121,8 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
     try {
       const txs = await goalAPI.getGoalTransactions(goal.id);
       setGoalTransactions(txs);
-    } catch {
-      setGoalTransactions([]);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoadingTransactions(false);
     }
@@ -160,6 +161,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
         await goalAPI.updateGoal(selectedGoal.id, payload);
       }
       await loadGoals();
+      onRefresh?.();
       setIsModalOpen(false);
     } catch (err: any) {
       setErrorMessage(err.message || 'Erro ao salvar meta');
@@ -174,6 +176,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
       setSaving(true);
       await goalAPI.deleteGoal(selectedGoal.id);
       await loadGoals();
+      onRefresh?.();
       setIsModalOpen(false);
     } catch (err: any) {
       setErrorMessage(err.message || 'Erro ao excluir meta');
@@ -187,6 +190,7 @@ export function GoalsPage({ searchQuery }: GoalsPageProps) {
     try {
       await goalAPI.markAsCompleted(goal.id);
       await loadGoals();
+      onRefresh?.();
     } catch {
       // silent fail
     }

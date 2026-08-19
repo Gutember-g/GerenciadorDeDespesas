@@ -4,7 +4,9 @@ import com.saas.gerenciadordespesas.dto.CategorySummaryDTO;
 import com.saas.gerenciadordespesas.dto.RuleSummaryDTO;
 import com.saas.gerenciadordespesas.dto.SummaryDTO;
 import com.saas.gerenciadordespesas.dto.InstallmentPurchaseDTO;
+import com.saas.gerenciadordespesas.models.Goal;
 import com.saas.gerenciadordespesas.models.Transaction;
+import com.saas.gerenciadordespesas.repositories.GoalRepository;
 import com.saas.gerenciadordespesas.repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,9 @@ public class DashboardService {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
+    @Autowired
+    private GoalRepository goalRepository;
 
     public Map<String, Object> getDashboardSummary(Long userId) {
         // Keeping legacy method for compatibility if needed, but we should probably migrate
@@ -77,26 +82,64 @@ public class DashboardService {
                 .sum();
         summary.setFaturaPrevistaCartao(faturaPrevistaCartao);
 
-        // 2. Saldo acumulado na Reserva de Emergência (historicamente)
-        Double emergencyAcumulado = allTransactions.stream()
+        // 2. Saldo acumulado na Reserva de Emergência (Metas de Emergência + Transações de Reserva não vinculadas)
+        List<Goal> userGoals = goalRepository.findByUserId(userId);
+        Double goalsAcumulado = userGoals.stream()
+                .filter(g -> "EMERGENCY".equalsIgnoreCase(g.getType()) ||
+                             (g.getName() != null && (g.getName().toLowerCase().contains("reserva") || g.getName().toLowerCase().contains("emergên"))))
+                .mapToDouble(g -> g.getCurrentAmount() != null ? g.getCurrentAmount() : 0.0)
+                .sum();
+
+        Double transactionsReservaAcumulado = allTransactions.stream()
                 .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
                              t.getCategory() != null &&
-                             "Reserva de emergência".equalsIgnoreCase(t.getCategory().getName()))
+                             ("SAVINGS".equalsIgnoreCase(getNormalizedRuleType(t.getCategory().getBudgetRuleType())) ||
+                              (t.getCategory().getName() != null && t.getCategory().getName().toLowerCase().contains("reserva"))))
+                .filter(t -> t.getGoalId() == null) // Evita contagem dupla caso a transação já esteja vinculada a uma meta
                 .mapToDouble(Transaction::getAmount)
                 .sum();
+
+        Double emergencyAcumulado = goalsAcumulado + transactionsReservaAcumulado;
         summary.setSaldoReservaEmergencia(emergencyAcumulado);
         summary.setEmergencyAcumulado(emergencyAcumulado);
 
-        // 3. Reserva de Emergência: Meta (6x Necessidades do mês ativo)
-        Double totalNecessidades = monthTransactions.stream()
+        // 3. Reserva de Emergência: Meta (6x a média mensal dos gastos essenciais "Necessidades" nos últimos 6 meses)
+        // Regra de Cálculo: Calcula 6x a média das despesas "Necessidades" (essenciais) dos últimos 6 meses disponíveis.
+        // Toda vez que uma transação de "Necessidades" for criada, editada ou removida, getSummary recalcula dinamicamente.
+        LocalDate sixMonthsAgoStart = startDate.minusMonths(5).withDayOfMonth(1);
+        List<Transaction> sixMonthsTransactions = transactionRepository.findByUserIdAndDateBetween(userId, sixMonthsAgoStart, endDate);
+
+        Map<String, Double> necessidadesByMonth = sixMonthsTransactions.stream()
                 .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
                              t.getCategory() != null &&
-                             "Necessidades".equalsIgnoreCase(getPortugueseParentCategory(t.getCategory().getBudgetRuleType())))
-                .mapToDouble(Transaction::getAmount)
-                .sum();
-        Double emergencyMeta = totalNecessidades * 6;
+                             "ESSENTIAL".equalsIgnoreCase(getNormalizedRuleType(t.getCategory().getBudgetRuleType())))
+                .collect(Collectors.groupingBy(
+                        t -> t.getDate().getYear() + "-" + String.format("%02d", t.getDate().getMonthValue()),
+                        Collectors.summingDouble(Transaction::getAmount)
+                ));
+
+        double avgNecessidades;
+        if (!necessidadesByMonth.isEmpty()) {
+            double total6Months = necessidadesByMonth.values().stream().mapToDouble(Double::doubleValue).sum();
+            avgNecessidades = total6Months / necessidadesByMonth.size();
+        } else {
+            Double totalNecessidadesMesAtivo = monthTransactions.stream()
+                    .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                                 t.getCategory() != null &&
+                                 "ESSENTIAL".equalsIgnoreCase(getNormalizedRuleType(t.getCategory().getBudgetRuleType())))
+                    .mapToDouble(Transaction::getAmount)
+                    .sum();
+            avgNecessidades = totalNecessidadesMesAtivo;
+        }
+
+        Double emergencyMeta = avgNecessidades * 6;
         if (emergencyMeta == 0.0) {
-            emergencyMeta = 6000.0; // Valor de contingência padrão
+            Double emergencyGoalsTarget = userGoals.stream()
+                    .filter(g -> "EMERGENCY".equalsIgnoreCase(g.getType()) ||
+                                 (g.getName() != null && (g.getName().toLowerCase().contains("reserva") || g.getName().toLowerCase().contains("emergên"))))
+                    .mapToDouble(g -> g.getTargetAmount() != null ? g.getTargetAmount() : 0.0)
+                    .sum();
+            emergencyMeta = emergencyGoalsTarget > 0 ? emergencyGoalsTarget : 6000.0;
         }
         summary.setEmergencyMeta(emergencyMeta);
 
@@ -104,17 +147,32 @@ public class DashboardService {
         summary.setEmergencyFalta(emergencyFalta);
         summary.setEmergencyPercentual(emergencyMeta > 0 ? (emergencyAcumulado / emergencyMeta) * 100 : 0.0);
 
-        // Aporte mensal planejado: soma das prioridades financeiras no mês corrente
-        Double totalPrioridades = monthTransactions.stream()
+        // Aporte mensal médio (Média dos aportes em "Reserva" / "SAVINGS" nos últimos 6 meses)
+        Map<String, Double> reservaByMonth = sixMonthsTransactions.stream()
                 .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
                              t.getCategory() != null &&
-                             "Reserva".equalsIgnoreCase(getPortugueseParentCategory(t.getCategory().getBudgetRuleType())))
-                .mapToDouble(Transaction::getAmount)
-                .sum();
-        Double emergencyAporteMensal = totalPrioridades > 0 ? totalPrioridades : 500.0; // padrão
+                             "SAVINGS".equalsIgnoreCase(getNormalizedRuleType(t.getCategory().getBudgetRuleType())))
+                .collect(Collectors.groupingBy(
+                        t -> t.getDate().getYear() + "-" + String.format("%02d", t.getDate().getMonthValue()),
+                        Collectors.summingDouble(Transaction::getAmount)
+                ));
+
+        double avgAporte;
+        if (!reservaByMonth.isEmpty()) {
+            avgAporte = reservaByMonth.values().stream().mapToDouble(Double::doubleValue).sum() / reservaByMonth.size();
+        } else {
+            Double totalPrioridades = monthTransactions.stream()
+                    .filter(t -> "EXPENSE".equalsIgnoreCase(t.getType()) &&
+                                 t.getCategory() != null &&
+                                 "SAVINGS".equalsIgnoreCase(getNormalizedRuleType(t.getCategory().getBudgetRuleType())))
+                    .mapToDouble(Transaction::getAmount)
+                    .sum();
+            avgAporte = totalPrioridades > 0 ? totalPrioridades : 500.0;
+        }
+        Double emergencyAporteMensal = avgAporte > 0 ? avgAporte : 500.0;
         summary.setEmergencyAporteMensal(emergencyAporteMensal);
 
-        Double emergencyPrazoEstimado = emergencyAporteMensal > 0 ? (emergencyFalta / emergencyAporteMensal) : 0.0;
+        Double emergencyPrazoEstimado = (emergencyFalta > 0 && emergencyAporteMensal > 0) ? (emergencyFalta / emergencyAporteMensal) : 0.0;
         summary.setEmergencyPrazoEstimado(emergencyPrazoEstimado);
 
         // 4. Meios de Pagamento do Mês
